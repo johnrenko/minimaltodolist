@@ -39,17 +39,17 @@ struct ContentView: View {
                         if item.isCompleted {
                             ZStack {
                                 Circle()
-                                    .frame(width: 32, height: 32)
+                                    .frame(width: 16, height: 16)
                                     .foregroundColor(Color(hue: 0.528, saturation: 0.86, brightness: 0.64))
                                 
                                 Image("check")
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .frame(width: 16, height: 16)
+                                    .frame(width: 8, height: 8)
                             }
                         } else {
                             Circle()
-                                .frame(width: 32, height: 32)
+                                .frame(width: 16, height: 16)
                                 .foregroundColor(.white)
                                 .overlay(
                                     Circle()
@@ -58,9 +58,9 @@ struct ContentView: View {
                             
                         }
                         Text(item.task ?? "")
-                            .font(.system(size:20))
+                            .font(.system(size:12))
                             .foregroundColor(.black)
-                            .frame(maxWidth: .infinity, minHeight: 22, maxHeight: 22, alignment: .topLeading)
+                            .frame(maxWidth: .infinity, minHeight: 14, maxHeight: 14, alignment: .topLeading)
                             .strikethrough(item.isCompleted, color: .black)
                             .help(item.task ?? "")
                         Spacer()
@@ -69,8 +69,12 @@ struct ContentView: View {
                                 viewModel.removeTask(at: IndexSet(integer: index))
                             }
                         }) {
-                            Image(systemName: "trash")
+                            Image("trash")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 12, height: 12)
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
@@ -79,11 +83,11 @@ struct ContentView: View {
                         }
                     }
                     .padding(.horizontal, 8)
-                    .padding(.vertical, 16)
-                    .cornerRadius(2)
+                    .padding(.vertical, 0)
+                    Divider()
                 }
             }
-            .background(Color.clear)
+        
         }
         .padding(16)
         .background(Color(red: 0.93, green: 0.95, blue: 0.96))
