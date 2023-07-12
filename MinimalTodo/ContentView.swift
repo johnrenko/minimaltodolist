@@ -11,16 +11,17 @@ struct ContentView: View {
     @StateObject private var viewModel = TodoListPersistenceController()
     @State private var newTask: String = ""
     @State private var selectedFilter: ContentView.TodoFilter = .all
-    @State private var selection = 0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Picker("", selection: $selectedFilter) {
-                Text("All").tag(TodoFilter.all)
-                Text("Todo").tag(TodoFilter.todo)
-                Text("Done").tag(TodoFilter.done)
+            HStack(){
+                Text("Todos").font(.system(size:16)).bold()
+                Spacer()
+                Text("\(viewModel.filteredItems(for: selectedFilter).count) tasks")
+                    .font(.system(size:16))
             }
-            .pickerStyle(SegmentedPickerStyle())
+            .padding(.top, 16)
+            .padding(.horizontal, 16)
             
             Form {
                 TextField("New task", text: $newTask)
@@ -28,6 +29,17 @@ struct ContentView: View {
                 viewModel.addTask(task: newTask)
                 newTask = ""
             }
+            .padding(.horizontal, 16)
+            
+            Picker("", selection: $selectedFilter) {
+                Text("All").tag(TodoFilter.all)
+                Text("Todo").tag(TodoFilter.todo)
+                Text("Done").tag(TodoFilter.done)
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .padding(.trailing, 16)
+            .padding(.leading, 8)
+            
             List {
                 ForEach(viewModel.filteredItems(for: selectedFilter)) { item in
                     HStack(alignment: .center, spacing: 12) {
@@ -77,36 +89,16 @@ struct ContentView: View {
                             viewModel.toggleIsCompleted(forItemAtIndex: index)
                         }
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 0)
+                    .padding(.leading, 2)
                     Divider()
                 }
             }
             
         }
-        .padding(16)
         .background(Color(red: 0.93, green: 0.95, blue: 0.96))
         .cornerRadius(8)
     }
     
-}
-
-struct FilterButton: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(isSelected ? .white : .black)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
-                .background(isSelected ? Color.blue : Color.clear)
-                .cornerRadius(8)
-        }
-    }
 }
 
 extension ContentView {
