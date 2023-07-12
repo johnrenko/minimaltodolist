@@ -11,21 +11,16 @@ struct ContentView: View {
     @StateObject private var viewModel = TodoListPersistenceController()
     @State private var newTask: String = ""
     @State private var selectedFilter: ContentView.TodoFilter = .all
+    @State private var selection = 0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                FilterButton(title: "All", isSelected: selectedFilter == .all) {
-                    selectedFilter = .all
-                }
-                FilterButton(title: "Todo", isSelected: selectedFilter == .todo) {
-                    selectedFilter = .todo
-                }
-                FilterButton(title: "Done", isSelected: selectedFilter == .done) {
-                    selectedFilter = .done
-                }
+            Picker("", selection: $selectedFilter) {
+                Text("All").tag(TodoFilter.all)
+                Text("Todo").tag(TodoFilter.todo)
+                Text("Done").tag(TodoFilter.done)
             }
-            .padding(.horizontal)
+            .pickerStyle(SegmentedPickerStyle())
             
             Form {
                 TextField("New task", text: $newTask)
@@ -87,7 +82,7 @@ struct ContentView: View {
                     Divider()
                 }
             }
-        
+            
         }
         .padding(16)
         .background(Color(red: 0.93, green: 0.95, blue: 0.96))
