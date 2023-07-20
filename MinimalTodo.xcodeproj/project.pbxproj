@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		CC3B142F2A48D0C2002E8BEE /* TodoListModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CC3B142D2A48D0C2002E8BEE /* TodoListModel.xcdatamodeld */; };
 		CC3B14312A48D1E8002E8BEE /* TodoListPersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3B14302A48D1E8002E8BEE /* TodoListPersistenceController.swift */; };
-		CC694D6C2A43410A009F5543 /* Todo.png in Resources */ = {isa = PBXBuildFile; fileRef = CC694D6B2A43410A009F5543 /* Todo.png */; };
 		CC9FD1322A43017C0021C034 /* MinimalTodoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD1312A43017C0021C034 /* MinimalTodoApp.swift */; };
 		CC9FD1342A43017C0021C034 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD1332A43017C0021C034 /* ContentView.swift */; };
 		CC9FD1362A43017E0021C034 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CC9FD1352A43017E0021C034 /* Assets.xcassets */; };
@@ -42,7 +41,6 @@
 /* Begin PBXFileReference section */
 		CC3B142E2A48D0C2002E8BEE /* TodoListModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = TodoListModel.xcdatamodel; sourceTree = "<group>"; };
 		CC3B14302A48D1E8002E8BEE /* TodoListPersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoListPersistenceController.swift; sourceTree = "<group>"; };
-		CC694D6B2A43410A009F5543 /* Todo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Todo.png; path = Assets.xcassets/Todo.png; sourceTree = "<group>"; };
 		CC9FD12E2A43017C0021C034 /* MinimalTodo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MinimalTodo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC9FD1312A43017C0021C034 /* MinimalTodoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoApp.swift; sourceTree = "<group>"; };
 		CC9FD1332A43017C0021C034 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -115,7 +113,6 @@
 				CC3B14302A48D1E8002E8BEE /* TodoListPersistenceController.swift */,
 				CCBC107D2A48E1510013EA75 /* PersistentController.swift */,
 				CC9FD1352A43017E0021C034 /* Assets.xcassets */,
-				CC694D6B2A43410A009F5543 /* Todo.png */,
 				CC9FD13A2A43017E0021C034 /* MinimalTodo.entitlements */,
 				CC9FD1372A43017E0021C034 /* Preview Content */,
 			);
@@ -251,7 +248,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CC694D6C2A43410A009F5543 /* Todo.png in Resources */,
 				CC9FD1392A43017E0021C034 /* Preview Assets.xcassets in Resources */,
 				CC9FD1362A43017E0021C034 /* Assets.xcassets in Resources */,
 			);
@@ -439,6 +435,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = MinimalTodo/MinimalTodo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -467,6 +464,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = MinimalTodo/MinimalTodo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
