@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "MinimalTodo X Bookmarks Sync",
+  "description": "Collect bookmarks from x.com and send them into MinimalTodo without using the paid X API.",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Sync X Bookmarks"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "http://127.0.0.1/*"
+  ]
+}

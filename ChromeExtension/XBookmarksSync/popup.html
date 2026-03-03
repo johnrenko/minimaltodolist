@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MinimalTodo X Sync</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel">
+        <div class="topline">
+          <p class="eyebrow">MinimalTodo</p>
+          <button id="check-connection" class="ghost" type="button">Check app</button>
+        </div>
+
+        <h1>Sync X bookmarks</h1>
+        <p class="lede">Open your bookmarks on X, then send them straight into the app.</p>
+
+        <div id="app-status" class="status-pill status-neutral">Checking app…</div>
+
+        <label class="field" for="endpoint">
+          <span>MinimalTodo endpoint</span>
+          <input id="endpoint" name="endpoint" type="url" autocomplete="off" spellcheck="false">
+        </label>
+
+        <label class="toggle" for="replace-existing">
+          <input id="replace-existing" name="replace-existing" type="checkbox">
+          <span>Replace existing bookmarks inside MinimalTodo</span>
+        </label>
+
+        <div class="actions">
+          <button id="sync" class="primary" type="button">Sync now</button>
+          <button id="open-bookmarks" class="secondary" type="button">Open bookmarks</button>
+        </div>
+
+        <p id="status-copy" class="status-copy">Open <code>x.com/i/bookmarks</code>, wait for the page to finish loading, then click <strong>Sync now</strong>.</p>
+      </section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

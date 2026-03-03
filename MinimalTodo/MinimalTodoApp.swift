@@ -1,34 +1,61 @@
 import SwiftUI
 import CoreData
 
+@MainActor
+private final class AppEnvironment {
+    static let shared = AppEnvironment()
+
+    let context: NSManagedObjectContext
+    let xBookmarksSyncService: XBookmarksSyncService
+
+    private init() {
+        context = PersistenceController.shared.container.viewContext
+        xBookmarksSyncService = XBookmarksSyncService()
+    }
+}
+
 @main
 struct MinimalTodoApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+    private let environment = AppEnvironment.shared
 
     var body: some Scene {
         WindowGroup {
-            ContentView(context: PersistenceController.shared.container.viewContext)
-                .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
+            ContentView(
+                context: environment.context,
+                xBookmarksSyncService: environment.xBookmarksSyncService
+            )
+            .environment(\.managedObjectContext, environment.context)
         }
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate {
-    private var popover = NSPopover()
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    private let environment = AppEnvironment.shared
+    private let popover = NSPopover()
     private var statusBarItem: NSStatusItem!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let context = PersistenceController.shared.container.viewContext
-        let contentView = ContentView(context: context)
-            .environment(\.managedObjectContext, context)
+        environment.xBookmarksSyncService.startExtensionImportListenerIfNeeded()
+
+        let contentView = ContentView(
+            context: environment.context,
+            xBookmarksSyncService: environment.xBookmarksSyncService,
+            capturesAuthenticationAnchor: true
+        )
+        .environment(\.managedObjectContext, environment.context)
 
         popover.contentViewController = NSHostingController(rootView: contentView)
-        popover.contentSize = NSSize(width: 380, height: 620)
+        popover.contentSize = NSSize(width: 400, height: 700)
         popover.behavior = .transient
 
         statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusBarItem.button {
-            button.image = NSImage(named: "Todo")
+            let statusImage = NSImage(named: "Todo")
+            statusImage?.isTemplate = true
+            button.image = statusImage
             button.action = #selector(togglePopover)
         }
     }

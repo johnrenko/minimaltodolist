@@ -44,8 +44,12 @@ struct ContentView: View {
     @State private var pomodoroSecondsRemaining = 25 * 60
     @State private var pomodoroMode: PomodoroMode = .work
     @State private var isPomodoroRunning = false
+    @State private var xBookmarksWindow: NSWindow?
+    @State private var showsPaidXAPISetup = false
     @AppStorage("themePreference") private var themePreferenceRawValue = ThemePreference.system.rawValue
-    @StateObject private var xBookmarksSyncService = XBookmarksSyncService()
+    @ObservedObject private var xBookmarksSyncService: XBookmarksSyncService
+
+    private let capturesAuthenticationAnchor: Bool
 
     private let pomodoroTicker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -72,13 +76,19 @@ struct ContentView: View {
         }
     }
 
-    init(context: NSManagedObjectContext) {
+    init(
+        context: NSManagedObjectContext,
+        xBookmarksSyncService: XBookmarksSyncService,
+        capturesAuthenticationAnchor: Bool = false
+    ) {
         _viewModel = StateObject(wrappedValue: TodoListPersistenceController(context: context))
+        _xBookmarksSyncService = ObservedObject(wrappedValue: xBookmarksSyncService)
+        self.capturesAuthenticationAnchor = capturesAuthenticationAnchor
     }
 
     private var themePreference: ThemePreference {
         get { ThemePreference(rawValue: themePreferenceRawValue) ?? .system }
-        set { themePreferenceRawValue = newValue.rawValue }
+        nonmutating set { themePreferenceRawValue = newValue.rawValue }
     }
 
     private var effectiveColorScheme: ColorScheme {
@@ -355,6 +365,14 @@ struct ContentView: View {
         .onChange(of: pomodoroMode) { _ in
             resetPomodoro()
         }
+        .background(authenticationAnchorReader)
+        .onChange(of: xBookmarksWindow) { newWindow in
+            guard capturesAuthenticationAnchor else {
+                return
+            }
+
+            xBookmarksSyncService.setPresentationAnchor(newWindow)
+        }
     }
 
     private var xBookmarksSection: some View {
@@ -365,45 +383,152 @@ struct ContentView: View {
 
                 Spacer()
 
-                if let lastSyncedAt = xBookmarksSyncService.lastSyncedAt {
-                    Text(lastSyncedAt, format: .dateTime.hour().minute())
+                if let xBookmarksSourceBadgeText {
+                    Text(xBookmarksSourceBadgeText)
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
-
-                Button(xBookmarksSyncService.isSyncing ? "Syncing…" : "Sync") {
-                    Task { await xBookmarksSyncService.syncBookmarks() }
-                }
-                .disabled(xBookmarksSyncService.isSyncing)
-                .buttonStyle(.bordered)
             }
 
-            SecureField("X API bearer token", text: $xBookmarksSyncService.bearerToken)
-                .textFieldStyle(.roundedBorder)
+            if let lastSyncedAt = xBookmarksSyncService.lastSyncedAt {
+                Text("Last updated \(lastSyncedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+            }
 
-            TextField("X user id", text: $xBookmarksSyncService.userId)
-                .textFieldStyle(.roundedBorder)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Free Chrome Sync")
+                        .font(.system(size: 12, weight: .semibold))
 
-            if xBookmarksSyncService.bearerToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                HStack(spacing: 8) {
-                    Button("Open X Login") {
-                        if let loginURL = URL(string: "https://x.com/i/flow/login") {
-                            NSWorkspace.shared.open(loginURL)
-                        }
-                    }
-                    .buttonStyle(.link)
+                    Spacer()
 
-                    Text("•")
+                    Text(xBookmarksSyncService.isExtensionImportServerRunning ? "Listener Ready" : "Listener Offline")
+                        .font(.system(size: 10, weight: .medium))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            (xBookmarksSyncService.isExtensionImportServerRunning ? Color.green : Color.orange)
+                                .opacity(effectiveColorScheme == .dark ? 0.26 : 0.18),
+                            in: Capsule()
+                        )
+                        .foregroundColor(xBookmarksSyncService.isExtensionImportServerRunning ? .green : .orange)
+                }
+
+                Text("Keep MinimalTodo open, load the included Chrome extension, then sync from your X bookmarks page. This path does not use X API credits.")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+
+                HStack {
+                    Text("Import endpoint")
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.secondary)
 
-                    Button("Get API Token") {
-                        if let developerPortalURL = URL(string: "https://developer.x.com/en/portal/dashboard") {
-                            NSWorkspace.shared.open(developerPortalURL)
-                        }
+                    Spacer()
+
+                    Button("Copy") {
+                        copyToPasteboard(xBookmarksSyncService.extensionImportEndpoint)
                     }
                     .buttonStyle(.link)
                 }
-                .font(.system(size: 11))
+
+                Text(xBookmarksSyncService.extensionImportEndpoint)
+                    .font(.system(size: 11, design: .monospaced))
+                    .textSelection(.enabled)
+
+                HStack(spacing: 8) {
+                    Button("Open X Bookmarks") {
+                        openURL("https://x.com/i/bookmarks")
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("Copy Endpoint") {
+                        copyToPasteboard(xBookmarksSyncService.extensionImportEndpoint)
+                    }
+                    .buttonStyle(.bordered)
+
+                    if !xBookmarksSyncService.isExtensionImportServerRunning {
+                        Button("Retry Listener") {
+                            xBookmarksSyncService.startExtensionImportListenerIfNeeded()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(glassCardBaseColor.opacity(effectiveColorScheme == .dark ? 1.0 : 0.92))
+            )
+
+            DisclosureGroup(isExpanded: $showsPaidXAPISetup) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .top, spacing: 8) {
+                        TextField("X OAuth client ID", text: $xBookmarksSyncService.clientId)
+                            .textFieldStyle(.roundedBorder)
+
+                        Button(xBookmarksPrimaryActionTitle) {
+                            Task { await xBookmarksSyncService.connectAndSyncBookmarks() }
+                        }
+                        .disabled(xBookmarksPrimaryActionDisabled)
+                        .buttonStyle(.borderedProminent)
+
+                        if xBookmarksSyncService.isAuthorized {
+                            Button("Disconnect") {
+                                Task { await xBookmarksSyncService.disconnect() }
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(xBookmarksSyncService.isAuthenticating || xBookmarksSyncService.isSyncing)
+                        }
+                    }
+
+                    if xBookmarksSyncService.isAuthorized, let authenticatedUser = xBookmarksSyncService.authenticatedUser {
+                        Text("Connected as \(authenticatedUser.name) (@\(authenticatedUser.username)). Token refresh and account lookup happen automatically.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("Optional paid path. Use your X app's Client ID and OAuth 2.0 PKCE setup if you want direct API sync.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+
+                    HStack {
+                        Text("Callback URL")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.secondary)
+
+                        Spacer()
+
+                        Button("Copy") {
+                            copyToPasteboard(xBookmarksSyncService.redirectURI)
+                        }
+                        .buttonStyle(.link)
+                    }
+
+                    Text(xBookmarksSyncService.redirectURI)
+                        .font(.system(size: 11, design: .monospaced))
+                        .textSelection(.enabled)
+
+                    HStack(spacing: 8) {
+                        Button("Open Keys & Tokens") {
+                            openURL("https://developer.x.com/en/portal/dashboard")
+                        }
+                        .buttonStyle(.link)
+
+                        Text("•")
+                            .foregroundColor(.secondary)
+
+                        Button("Open Auth Settings") {
+                            openURL("https://developer.x.com/en/portal/projects-and-apps")
+                        }
+                        .buttonStyle(.link)
+                    }
+                    .font(.system(size: 11))
+                }
+                .padding(.top, 6)
+            } label: {
+                Text("Paid X API Sync (Optional)")
+                    .font(.system(size: 12, weight: .semibold))
             }
 
             if let lastSyncError = xBookmarksSyncService.lastSyncError {
@@ -413,22 +538,30 @@ struct ContentView: View {
             }
 
             if xBookmarksSyncService.bookmarks.isEmpty {
-                Text("No synced bookmarks yet.")
+                Text(xBookmarksEmptyStateText)
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(xBookmarksSyncService.bookmarks.prefix(5)) { bookmark in
+                    ForEach(xBookmarksSyncService.bookmarks.prefix(4)) { bookmark in
                         Button {
                             if let tweetURL = bookmark.tweetURL {
                                 NSWorkspace.shared.open(tweetURL)
                             }
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
-                                if let authorUsername = bookmark.authorUsername {
-                                    Text("@\(authorUsername)")
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .foregroundColor(.secondary)
+                                HStack(spacing: 6) {
+                                    if let authorUsername = bookmark.authorUsername {
+                                        Text("@\(authorUsername)")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(.secondary)
+                                    }
+
+                                    if let createdAt = bookmark.createdAt {
+                                        Text(createdAt, format: .dateTime.month(.abbreviated).day())
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.secondary)
+                                    }
                                 }
 
                                 Text(bookmark.text)
@@ -460,6 +593,60 @@ struct ContentView: View {
         return String(format: "%02d:%02d", minutes, seconds)
     }
 
+    @ViewBuilder
+    private var authenticationAnchorReader: some View {
+        if capturesAuthenticationAnchor {
+            WindowReader(window: $xBookmarksWindow)
+        }
+    }
+
+    private var xBookmarksSourceBadgeText: String? {
+        switch xBookmarksSyncService.updateSource {
+        case .chromeExtension:
+            return "Chrome Extension"
+        case .xAPI:
+            if let authenticatedUser = xBookmarksSyncService.authenticatedUser,
+               xBookmarksSyncService.isAuthorized {
+                return "@\(authenticatedUser.username)"
+            }
+
+            return "X API"
+        case nil:
+            if let authenticatedUser = xBookmarksSyncService.authenticatedUser,
+               xBookmarksSyncService.isAuthorized {
+                return "@\(authenticatedUser.username)"
+            }
+
+            return nil
+        }
+    }
+
+    private var xBookmarksPrimaryActionTitle: String {
+        if xBookmarksSyncService.isAuthenticating {
+            return "Connecting API…"
+        }
+
+        if xBookmarksSyncService.isSyncing {
+            return "Syncing API…"
+        }
+
+        return xBookmarksSyncService.isAuthorized ? "Sync API" : "Connect API"
+    }
+
+    private var xBookmarksPrimaryActionDisabled: Bool {
+        xBookmarksSyncService.isAuthenticating
+            || xBookmarksSyncService.isSyncing
+            || xBookmarksSyncService.clientId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var xBookmarksEmptyStateText: String {
+        if xBookmarksSyncService.isAuthorized {
+            return "No bookmarks were returned by the X API yet."
+        }
+
+        return "Use the free Chrome extension to import bookmarks, or expand the paid X API section if you want direct API sync."
+    }
+
     private func addTask() {
         viewModel.addTask(
             task: newTask,
@@ -473,5 +660,37 @@ struct ContentView: View {
     private func resetPomodoro() {
         isPomodoroRunning = false
         pomodoroSecondsRemaining = pomodoroMode.durationInSeconds
+    }
+
+    private func copyToPasteboard(_ value: String) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(value, forType: .string)
+    }
+
+    private func openURL(_ string: String) {
+        guard let url = URL(string: string) else {
+            return
+        }
+
+        NSWorkspace.shared.open(url)
+    }
+}
+
+private struct WindowReader: NSViewRepresentable {
+    @Binding var window: NSWindow?
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            window = view.window
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            window = nsView.window
+        }
     }
 }
