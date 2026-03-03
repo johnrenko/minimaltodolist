@@ -90,6 +90,26 @@ h1 {
   color: #ffaaaa;
 }
 
+
+.details-panel {
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.details-panel summary {
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245, 239, 229, 0.82);
+}
+
+.details-panel[open] summary {
+  margin-bottom: 10px;
+}
+
 .field {
   display: block;
   margin-bottom: 12px;

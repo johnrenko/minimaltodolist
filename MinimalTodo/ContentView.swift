@@ -46,6 +46,7 @@ struct ContentView: View {
     @State private var isPomodoroRunning = false
     @State private var xBookmarksWindow: NSWindow?
     @State private var showsPaidXAPISetup = false
+    @State private var showsFreeSyncTechnicalDetails = false
     @AppStorage("themePreference") private var themePreferenceRawValue = ThemePreference.system.rawValue
     @ObservedObject private var xBookmarksSyncService: XBookmarksSyncService
 
@@ -415,44 +416,47 @@ struct ContentView: View {
                         .foregroundColor(xBookmarksSyncService.isExtensionImportServerRunning ? .green : .orange)
                 }
 
-                Text("Keep MinimalTodo open, load the included Chrome extension, then sync from your X bookmarks page. This path does not use X API credits.")
+                Text("Keep MinimalTodo open, load the included Chrome extension, then sync from your X bookmarks page. By default, only new bookmarks are imported.")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
-
-                HStack {
-                    Text("Import endpoint")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.secondary)
-
-                    Spacer()
-
-                    Button("Copy") {
-                        copyToPasteboard(xBookmarksSyncService.extensionImportEndpoint)
-                    }
-                    .buttonStyle(.link)
-                }
-
-                Text(xBookmarksSyncService.extensionImportEndpoint)
-                    .font(.system(size: 11, design: .monospaced))
-                    .textSelection(.enabled)
 
                 HStack(spacing: 8) {
                     Button("Open X Bookmarks") {
                         openURL("https://x.com/i/bookmarks")
                     }
                     .buttonStyle(.borderedProminent)
+                }
 
-                    Button("Copy Endpoint") {
-                        copyToPasteboard(xBookmarksSyncService.extensionImportEndpoint)
-                    }
-                    .buttonStyle(.bordered)
+                DisclosureGroup(isExpanded: $showsFreeSyncTechnicalDetails) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Import endpoint")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.secondary)
 
-                    if !xBookmarksSyncService.isExtensionImportServerRunning {
-                        Button("Retry Listener") {
-                            xBookmarksSyncService.startExtensionImportListenerIfNeeded()
+                            Spacer()
+
+                            Button("Copy") {
+                                copyToPasteboard(xBookmarksSyncService.extensionImportEndpoint)
+                            }
+                            .buttonStyle(.link)
                         }
-                        .buttonStyle(.bordered)
+
+                        Text(xBookmarksSyncService.extensionImportEndpoint)
+                            .font(.system(size: 11, design: .monospaced))
+                            .textSelection(.enabled)
+
+                        if !xBookmarksSyncService.isExtensionImportServerRunning {
+                            Button("Retry Listener") {
+                                xBookmarksSyncService.startExtensionImportListenerIfNeeded()
+                            }
+                            .buttonStyle(.bordered)
+                        }
                     }
+                    .padding(.top, 4)
+                } label: {
+                    Text("Technical details")
+                        .font(.system(size: 11, weight: .semibold))
                 }
             }
             .padding(10)
