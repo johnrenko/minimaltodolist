@@ -55,7 +55,8 @@ xcodebuild test -project MinimalTodo.xcodeproj -scheme MinimalTodo -destination 
 
 1. Create an app in the X Developer Portal with access to the Bookmarks endpoint.
 2. Copy your **Bearer Token** and your X numeric **User ID**.
-3. In the app popover, open **X Bookmarks**, paste both values, and click **Sync**.
-4. Click a synced bookmark to open the tweet in your default browser.
+3. In the app popover, open **X Bookmarks**. On first use you can click **Open X Login** and **Get API Token** shortcuts to open the right pages in your browser.
+4. Paste both values and click **Sync**.
+5. Click a synced bookmark to open the tweet in your default browser.
 
 > Note: this feature uses `https://api.x.com/2/users/:id/bookmarks` and stores the last synced results locally in `UserDefaults`.

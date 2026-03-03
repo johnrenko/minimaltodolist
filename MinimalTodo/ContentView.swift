@@ -384,6 +384,28 @@ struct ContentView: View {
             TextField("X user id", text: $xBookmarksSyncService.userId)
                 .textFieldStyle(.roundedBorder)
 
+            if xBookmarksSyncService.bearerToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                HStack(spacing: 8) {
+                    Button("Open X Login") {
+                        if let loginURL = URL(string: "https://x.com/i/flow/login") {
+                            NSWorkspace.shared.open(loginURL)
+                        }
+                    }
+                    .buttonStyle(.link)
+
+                    Text("•")
+                        .foregroundColor(.secondary)
+
+                    Button("Get API Token") {
+                        if let developerPortalURL = URL(string: "https://developer.x.com/en/portal/dashboard") {
+                            NSWorkspace.shared.open(developerPortalURL)
+                        }
+                    }
+                    .buttonStyle(.link)
+                }
+                .font(.system(size: 11))
+            }
+
             if let lastSyncError = xBookmarksSyncService.lastSyncError {
                 Text(lastSyncError)
                     .font(.system(size: 11))
