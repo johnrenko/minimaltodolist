@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreData
 import Combine
+import AppKit
 
 struct ContentView: View {
     private enum ThemePreference: String, CaseIterable {
@@ -44,6 +45,7 @@ struct ContentView: View {
     @State private var pomodoroMode: PomodoroMode = .work
     @State private var isPomodoroRunning = false
     @AppStorage("themePreference") private var themePreferenceRawValue = ThemePreference.system.rawValue
+    @StateObject private var xBookmarksSyncService = XBookmarksSyncService()
 
     private let pomodoroTicker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -230,6 +232,8 @@ struct ContentView: View {
             .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
             .padding(.horizontal, 10)
 
+            xBookmarksSection
+
             if viewModel.items.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "checklist")
@@ -351,6 +355,103 @@ struct ContentView: View {
         .onChange(of: pomodoroMode) { _ in
             resetPomodoro()
         }
+    }
+
+    private var xBookmarksSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("X Bookmarks")
+                    .font(.system(size: 13, weight: .semibold))
+
+                Spacer()
+
+                if let lastSyncedAt = xBookmarksSyncService.lastSyncedAt {
+                    Text(lastSyncedAt, format: .dateTime.hour().minute())
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Button(xBookmarksSyncService.isSyncing ? "Syncing…" : "Sync") {
+                    Task { await xBookmarksSyncService.syncBookmarks() }
+                }
+                .disabled(xBookmarksSyncService.isSyncing)
+                .buttonStyle(.bordered)
+            }
+
+            SecureField("X API bearer token", text: $xBookmarksSyncService.bearerToken)
+                .textFieldStyle(.roundedBorder)
+
+            TextField("X user id", text: $xBookmarksSyncService.userId)
+                .textFieldStyle(.roundedBorder)
+
+            if xBookmarksSyncService.bearerToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                HStack(spacing: 8) {
+                    Button("Open X Login") {
+                        if let loginURL = URL(string: "https://x.com/i/flow/login") {
+                            NSWorkspace.shared.open(loginURL)
+                        }
+                    }
+                    .buttonStyle(.link)
+
+                    Text("•")
+                        .foregroundColor(.secondary)
+
+                    Button("Get API Token") {
+                        if let developerPortalURL = URL(string: "https://developer.x.com/en/portal/dashboard") {
+                            NSWorkspace.shared.open(developerPortalURL)
+                        }
+                    }
+                    .buttonStyle(.link)
+                }
+                .font(.system(size: 11))
+            }
+
+            if let lastSyncError = xBookmarksSyncService.lastSyncError {
+                Text(lastSyncError)
+                    .font(.system(size: 11))
+                    .foregroundColor(.red)
+            }
+
+            if xBookmarksSyncService.bookmarks.isEmpty {
+                Text("No synced bookmarks yet.")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(xBookmarksSyncService.bookmarks.prefix(5)) { bookmark in
+                        Button {
+                            if let tweetURL = bookmark.tweetURL {
+                                NSWorkspace.shared.open(tweetURL)
+                            }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                if let authorUsername = bookmark.authorUsername {
+                                    Text("@\(authorUsername)")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundColor(.secondary)
+                                }
+
+                                Text(bookmark.text)
+                                    .font(.system(size: 12))
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.leading)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(glassCardBorderColor, lineWidth: 0.8)
+        )
+        .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
+        .padding(.horizontal, 10)
     }
 
     private var pomodoroClock: String {
