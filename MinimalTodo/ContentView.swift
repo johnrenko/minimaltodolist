@@ -91,6 +91,24 @@ struct ContentView: View {
         effectiveColorScheme == .dark ? Color(red: 0.18, green: 0.19, blue: 0.22) : .white
     }
 
+    private var glassCardBaseColor: Color {
+        effectiveColorScheme == .dark
+            ? Color.white.opacity(0.08)
+            : Color.white.opacity(0.72)
+    }
+
+    private var glassCardBorderColor: Color {
+        effectiveColorScheme == .dark
+            ? Color.white.opacity(0.22)
+            : Color.white.opacity(0.85)
+    }
+
+    private var glassCardShadowColor: Color {
+        effectiveColorScheme == .dark
+            ? Color.black.opacity(0.35)
+            : Color.black.opacity(0.12)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -155,9 +173,18 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
                     TextField("New task", text: $newTask)
+                        .textFieldStyle(.plain)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(glassCardBorderColor, lineWidth: 0.8)
+                        )
                         .onSubmit(addTask)
 
                     Button("Add", action: addTask)
+                        .buttonStyle(.borderedProminent)
                         .disabled(newTask.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
 
@@ -177,6 +204,14 @@ struct ContentView: View {
                 }
             }
             .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(glassCardBorderColor, lineWidth: 0.8)
+            )
+            .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
+            .padding(.horizontal, 10)
 
             Picker("", selection: $viewModel.selectedFilter) {
                 Text("All").tag(TodoListPersistenceController.TodoFilter.all)
@@ -184,8 +219,16 @@ struct ContentView: View {
                 Text("Done").tag(TodoListPersistenceController.TodoFilter.done)
             }
             .pickerStyle(SegmentedPickerStyle())
+            .padding(.vertical, 8)
             .padding(.trailing, 16)
             .padding(.leading, 8)
+            .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(glassCardBorderColor, lineWidth: 0.8)
+            )
+            .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
+            .padding(.horizontal, 10)
 
             if viewModel.items.isEmpty {
                 VStack(spacing: 8) {
@@ -198,6 +241,13 @@ struct ContentView: View {
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(glassCardBorderColor, lineWidth: 0.8)
+                )
+                .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
+                .padding(.horizontal, 10)
             } else {
                 List {
                     ForEach(viewModel.items) { item in
@@ -255,12 +305,37 @@ struct ContentView: View {
                         .onTapGesture {
                             viewModel.toggleIsCompleted(id: item.id)
                         }
+                        .listRowBackground(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(glassCardBaseColor)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .stroke(glassCardBorderColor, lineWidth: 0.8)
+                                )
+                                .padding(.vertical, 3)
+                        )
                         .padding(.leading, 2)
                     }
                 }
+                .scrollContentBackground(.hidden)
+                .background(.clear)
+                .padding(.horizontal, 10)
             }
         }
-        .background(backgroundColor)
+        .background(
+            ZStack {
+                backgroundColor
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(effectiveColorScheme == .dark ? 0.07 : 0.5),
+                        Color.clear,
+                        Color.blue.opacity(effectiveColorScheme == .dark ? 0.14 : 0.18)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+        )
         .cornerRadius(8)
         .preferredColorScheme(themePreference.colorScheme)
         .onReceive(pomodoroTicker) { _ in
