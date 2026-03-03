@@ -4,6 +4,12 @@ import Combine
 import AppKit
 
 struct ContentView: View {
+    private enum AppTab: Hashable {
+        case todo
+        case pomodoro
+        case xBookmarks
+    }
+
     private enum ThemePreference: String, CaseIterable {
         case system
         case light
@@ -41,6 +47,7 @@ struct ContentView: View {
     @State private var newTask: String = ""
     @State private var includesDeadline = false
     @State private var selectedDeadline = Date()
+    @State private var selectedTab: AppTab = .todo
     @State private var pomodoroSecondsRemaining = 25 * 60
     @State private var pomodoroMode: PomodoroMode = .work
     @State private var isPomodoroRunning = false
@@ -121,6 +128,10 @@ struct ContentView: View {
             : Color.black.opacity(0.12)
     }
 
+    private var openTodoCount: Int {
+        viewModel.items.filter { !$0.isCompleted }.count
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -149,39 +160,102 @@ struct ContentView: View {
             .padding(.top, 16)
             .padding(.horizontal, 16)
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Pomodoro")
-                        .font(.system(size: 13, weight: .semibold))
-                    Spacer()
-                    Text(pomodoroMode.title)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-
-                HStack(alignment: .center, spacing: 12) {
-                    Text(pomodoroClock)
-                        .font(.system(size: 24, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-
-                    Spacer()
-
-                    Button(isPomodoroRunning ? "Pause" : "Start") {
-                        isPomodoroRunning.toggle()
-                    }
-
-                    Button("Reset", action: resetPomodoro)
-                        .disabled(pomodoroSecondsRemaining == pomodoroMode.durationInSeconds)
-                }
-
-                Picker("Timer mode", selection: $pomodoroMode) {
-                    Text("Work").tag(PomodoroMode.work)
-                    Text("Break").tag(PomodoroMode.shortBreak)
-                }
-                .pickerStyle(.segmented)
+            Picker("", selection: $selectedTab) {
+                Text("Pomodoro").tag(AppTab.pomodoro)
+                Text("X Bookmarks").tag(AppTab.xBookmarks)
+                Text("Todo (\(openTodoCount))").tag(AppTab.todo)
             }
-            .padding(.horizontal, 16)
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 10)
 
+            Group {
+                switch selectedTab {
+                case .pomodoro:
+                    pomodoroSection
+                case .xBookmarks:
+                    xBookmarksSection
+                case .todo:
+                    todoSection
+                }
+            }
+        }
+        .background(
+            ZStack {
+                backgroundColor
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(effectiveColorScheme == .dark ? 0.07 : 0.5),
+                        Color.clear,
+                        Color.blue.opacity(effectiveColorScheme == .dark ? 0.14 : 0.18)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+        )
+        .cornerRadius(8)
+        .preferredColorScheme(themePreference.colorScheme)
+        .onReceive(pomodoroTicker) { _ in
+            guard isPomodoroRunning else { return }
+
+            if pomodoroSecondsRemaining > 0 {
+                pomodoroSecondsRemaining -= 1
+            } else {
+                isPomodoroRunning = false
+                NSSound.beep()
+            }
+        }
+        .onChange(of: pomodoroMode) { _ in
+            resetPomodoro()
+        }
+        .background(authenticationAnchorReader)
+        .onChange(of: xBookmarksWindow) { newWindow in
+            guard capturesAuthenticationAnchor else {
+                return
+            }
+
+            xBookmarksSyncService.setPresentationAnchor(newWindow)
+        }
+    }
+
+    private var pomodoroSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Pomodoro")
+                    .font(.system(size: 13, weight: .semibold))
+                Spacer()
+                Text(pomodoroMode.title)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+
+            HStack(alignment: .center, spacing: 12) {
+                Text(pomodoroClock)
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+
+                Spacer()
+
+                Button(isPomodoroRunning ? "Pause" : "Start") {
+                    isPomodoroRunning.toggle()
+                }
+
+                Button("Reset", action: resetPomodoro)
+                    .disabled(pomodoroSecondsRemaining == pomodoroMode.durationInSeconds)
+            }
+
+            Picker("Timer mode", selection: $pomodoroMode) {
+                Text("Work").tag(PomodoroMode.work)
+                Text("Break").tag(PomodoroMode.shortBreak)
+            }
+            .pickerStyle(.segmented)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private var todoSection: some View {
+        VStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
                     TextField("New task", text: $newTask)
@@ -241,8 +315,6 @@ struct ContentView: View {
             )
             .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
             .padding(.horizontal, 10)
-
-            xBookmarksSection
 
             if viewModel.items.isEmpty {
                 VStack(spacing: 8) {
@@ -335,43 +407,6 @@ struct ContentView: View {
                 .background(.clear)
                 .padding(.horizontal, 10)
             }
-        }
-        .background(
-            ZStack {
-                backgroundColor
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(effectiveColorScheme == .dark ? 0.07 : 0.5),
-                        Color.clear,
-                        Color.blue.opacity(effectiveColorScheme == .dark ? 0.14 : 0.18)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
-        )
-        .cornerRadius(8)
-        .preferredColorScheme(themePreference.colorScheme)
-        .onReceive(pomodoroTicker) { _ in
-            guard isPomodoroRunning else { return }
-
-            if pomodoroSecondsRemaining > 0 {
-                pomodoroSecondsRemaining -= 1
-            } else {
-                isPomodoroRunning = false
-                NSSound.beep()
-            }
-        }
-        .onChange(of: pomodoroMode) { _ in
-            resetPomodoro()
-        }
-        .background(authenticationAnchorReader)
-        .onChange(of: xBookmarksWindow) { newWindow in
-            guard capturesAuthenticationAnchor else {
-                return
-            }
-
-            xBookmarksSyncService.setPresentationAnchor(newWindow)
         }
     }
 
@@ -542,38 +577,42 @@ struct ContentView: View {
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
             } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(xBookmarksSyncService.bookmarks.prefix(4)) { bookmark in
-                        Button {
-                            if let tweetURL = bookmark.tweetURL {
-                                NSWorkspace.shared.open(tweetURL)
-                            }
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack(spacing: 6) {
-                                    if let authorUsername = bookmark.authorUsername {
-                                        Text("@\(authorUsername)")
-                                            .font(.system(size: 11, weight: .semibold))
-                                            .foregroundColor(.secondary)
-                                    }
-
-                                    if let createdAt = bookmark.createdAt {
-                                        Text(createdAt, format: .dateTime.month(.abbreviated).day())
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.secondary)
-                                    }
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(xBookmarksSyncService.bookmarks) { bookmark in
+                            Button {
+                                if let tweetURL = bookmark.tweetURL {
+                                    NSWorkspace.shared.open(tweetURL)
                                 }
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 6) {
+                                        if let authorUsername = bookmark.authorUsername {
+                                            Text("@\(authorUsername)")
+                                                .font(.system(size: 11, weight: .semibold))
+                                                .foregroundColor(.secondary)
+                                        }
 
-                                Text(bookmark.text)
-                                    .font(.system(size: 12))
-                                    .lineLimit(2)
-                                    .multilineTextAlignment(.leading)
+                                        if let createdAt = bookmark.createdAt {
+                                            Text(createdAt, format: .dateTime.month(.abbreviated).day())
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+
+                                    Text(bookmark.text)
+                                        .font(.system(size: 12))
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
+                                        .help(bookmark.text)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
+                .frame(maxHeight: 220)
             }
         }
         .padding(.horizontal, 16)
