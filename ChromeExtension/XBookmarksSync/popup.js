@@ -2,12 +2,12 @@ const DEFAULT_ENDPOINT = "http://127.0.0.1:48123/x-bookmarks/import";
 const BOOKMARKS_URL = "https://x.com/i/bookmarks";
 const STORAGE_KEYS = {
   endpoint: "minimaltodoEndpoint",
-  replaceExisting: "minimaltodoReplaceExisting"
+  importEverythingAgain: "minimaltodoImportEverythingAgain"
 };
 
 const elements = {
   endpoint: document.getElementById("endpoint"),
-  replaceExisting: document.getElementById("replace-existing"),
+  importEverythingAgain: document.getElementById("import-everything-again"),
   sync: document.getElementById("sync"),
   openBookmarks: document.getElementById("open-bookmarks"),
   checkConnection: document.getElementById("check-connection"),
@@ -20,14 +20,14 @@ document.addEventListener("DOMContentLoaded", initialize);
 async function initialize() {
   const stored = await chrome.storage.local.get([
     STORAGE_KEYS.endpoint,
-    STORAGE_KEYS.replaceExisting
+    STORAGE_KEYS.importEverythingAgain
   ]);
 
   elements.endpoint.value = stored[STORAGE_KEYS.endpoint] || DEFAULT_ENDPOINT;
-  elements.replaceExisting.checked = stored[STORAGE_KEYS.replaceExisting] ?? true;
+  elements.importEverythingAgain.checked = stored[STORAGE_KEYS.importEverythingAgain] ?? false;
 
   elements.endpoint.addEventListener("change", persistSettings);
-  elements.replaceExisting.addEventListener("change", persistSettings);
+  elements.importEverythingAgain.addEventListener("change", persistSettings);
   elements.sync.addEventListener("click", handleSync);
   elements.openBookmarks.addEventListener("click", () => chrome.tabs.create({ url: BOOKMARKS_URL }));
   elements.checkConnection.addEventListener("click", refreshConnectionState);
@@ -38,7 +38,7 @@ async function initialize() {
 async function persistSettings() {
   await chrome.storage.local.set({
     [STORAGE_KEYS.endpoint]: elements.endpoint.value.trim() || DEFAULT_ENDPOINT,
-    [STORAGE_KEYS.replaceExisting]: elements.replaceExisting.checked
+    [STORAGE_KEYS.importEverythingAgain]: elements.importEverythingAgain.checked
   });
 }
 
@@ -100,6 +100,18 @@ async function handleSync() {
       throw new Error("No bookmarks were detected on the current X bookmarks page.");
     }
 
+    const knownBookmarkIDs = await fetchKnownBookmarkIDs(endpoint);
+    const shouldImportEverythingAgain = elements.importEverythingAgain.checked;
+    const bookmarksToImport = shouldImportEverythingAgain
+      ? result.bookmarks
+      : result.bookmarks.filter((bookmark) => !knownBookmarkIDs.has(bookmark.id));
+
+    if (bookmarksToImport.length === 0) {
+      setStatusCopy("Everything is already synced. No new bookmarks were found.", "success");
+      await refreshConnectionState();
+      return;
+    }
+
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -107,8 +119,8 @@ async function handleSync() {
       },
       body: JSON.stringify({
         exportedAt: new Date().toISOString(),
-        replaceExisting: elements.replaceExisting.checked,
-        bookmarks: result.bookmarks
+        replaceExisting: false,
+        bookmarks: bookmarksToImport
       })
     });
 
@@ -119,7 +131,7 @@ async function handleSync() {
     }
 
     setStatusCopy(
-      `Imported ${payload.importedCount} bookmarks into MinimalTodo. Total saved: ${payload.totalCount}.`,
+      `Imported ${bookmarksToImport.length} bookmarks into MinimalTodo. Total saved: ${payload.totalCount}.`,
       "success"
     );
     await refreshConnectionState();
@@ -145,6 +157,28 @@ async function findBookmarksTab() {
 
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return activeTab && isBookmarksURL(activeTab.url) ? activeTab : null;
+}
+
+
+async function fetchKnownBookmarkIDs(endpoint) {
+  const healthURL = healthEndpointFor(endpoint);
+
+  if (!healthURL) {
+    return new Set();
+  }
+
+  try {
+    const response = await fetch(healthURL, { method: "GET" });
+    const payload = await response.json();
+
+    if (!response.ok || payload.status !== "ok" || !Array.isArray(payload.bookmarkIDs)) {
+      return new Set();
+    }
+
+    return new Set(payload.bookmarkIDs.filter((id) => typeof id === "string"));
+  } catch (error) {
+    return new Set();
+  }
 }
 
 function normalizedEndpoint() {
