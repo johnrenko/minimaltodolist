@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var newTask: String = ""
     @State private var includesDeadline = false
     @State private var selectedDeadline = Date()
+    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
 
     init(context: NSManagedObjectContext) {
         _viewModel = StateObject(wrappedValue: TodoListPersistenceController(context: context))
@@ -18,6 +19,14 @@ struct ContentView: View {
                     .font(.system(size: 16))
                     .bold()
                 Spacer()
+                Toggle(isOn: $isDarkModeEnabled) {
+                    Image(systemName: isDarkModeEnabled ? "moon.fill" : "sun.max.fill")
+                        .font(.system(size: 13))
+                }
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .help("Toggle dark mode")
+
                 Text("\(viewModel.items.count) tasks")
                     .font(.system(size: 16))
             }
@@ -88,7 +97,7 @@ struct ContentView: View {
                             } else {
                                 Circle()
                                     .frame(width: 16, height: 16)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(isDarkModeEnabled ? Color(red: 0.18, green: 0.19, blue: 0.22) : .white)
                                     .overlay(
                                         Circle()
                                             .stroke(Color(hue: 0.528, saturation: 0.86, brightness: 0.64), lineWidth: 2)
@@ -132,8 +141,9 @@ struct ContentView: View {
                 }
             }
         }
-        .background(Color(red: 0.93, green: 0.95, blue: 0.96))
+        .background(isDarkModeEnabled ? Color(red: 0.16, green: 0.17, blue: 0.2) : Color(red: 0.93, green: 0.95, blue: 0.96))
         .cornerRadius(8)
+        .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
     }
 
     private func addTask() {
