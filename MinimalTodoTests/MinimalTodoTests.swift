@@ -1,36 +1,62 @@
-//
-//  MinimalTodoTests.swift
-//  MinimalTodoTests
-//
-//  Created by John Dutamby 2 on 21/06/2023.
-//
-
 import XCTest
+import CoreData
 @testable import MinimalTodo
 
 final class MinimalTodoTests: XCTestCase {
+    private var context: NSManagedObjectContext!
+    private var controller: TodoListPersistenceController!
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        context = PersistenceController(inMemory: true).container.viewContext
+        controller = TodoListPersistenceController(context: context)
     }
 
     override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        context = nil
+        controller = nil
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    func testAddTaskTrimsWhitespaceAndRejectsEmptyValues() throws {
+        controller.addTask(task: "   ")
+        controller.addTask(task: "   Write tests   ")
+
+        XCTAssertEqual(controller.items.count, 1)
+        XCTAssertEqual(controller.items.first?.task, "Write tests")
+        XCTAssertEqual(controller.items.first?.isCompleted, false)
     }
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
+    func testToggleCompletionByIdentifier() throws {
+        controller.addTask(task: "Ship feature")
+        let id = controller.items.first?.id
+
+        controller.toggleIsCompleted(id: id)
+
+        XCTAssertEqual(controller.items.first?.isCompleted, true)
     }
 
+    func testDeleteTaskByIdentifier() throws {
+        controller.addTask(task: "A")
+        controller.addTask(task: "B")
+
+        let firstId = controller.items.first?.id
+        controller.removeTask(id: firstId)
+
+        XCTAssertEqual(controller.items.count, 1)
+    }
+
+    func testFilteringDoneAndTodo() throws {
+        controller.addTask(task: "todo item")
+        controller.addTask(task: "done item")
+
+        let doneId = controller.items.first(where: { $0.task == "done item" })?.id
+        controller.toggleIsCompleted(id: doneId)
+
+        controller.selectedFilter = .done
+        XCTAssertEqual(controller.items.count, 1)
+        XCTAssertEqual(controller.items.first?.task, "done item")
+
+        controller.selectedFilter = .todo
+        XCTAssertEqual(controller.items.count, 1)
+        XCTAssertEqual(controller.items.first?.task, "todo item")
+    }
 }

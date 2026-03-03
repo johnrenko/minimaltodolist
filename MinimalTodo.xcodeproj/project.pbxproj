@@ -16,8 +16,6 @@
 		CC9FD1442A43017E0021C034 /* MinimalTodoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD1432A43017E0021C034 /* MinimalTodoTests.swift */; };
 		CC9FD14E2A43017E0021C034 /* MinimalTodoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD14D2A43017E0021C034 /* MinimalTodoUITests.swift */; };
 		CC9FD1502A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD14F2A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift */; };
-		CC9FD15D2A4322750021C034 /* TodoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD15C2A4322750021C034 /* TodoItem.swift */; };
-		CC9FD15F2A4322C80021C034 /* TodoListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD15E2A4322C80021C034 /* TodoListViewModel.swift */; };
 		CCBC107E2A48E1510013EA75 /* PersistentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBC107D2A48E1510013EA75 /* PersistentController.swift */; };
 /* End PBXBuildFile section */
 
@@ -52,8 +50,6 @@
 		CC9FD1492A43017E0021C034 /* MinimalTodoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MinimalTodoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC9FD14D2A43017E0021C034 /* MinimalTodoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoUITests.swift; sourceTree = "<group>"; };
 		CC9FD14F2A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		CC9FD15C2A4322750021C034 /* TodoItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoItem.swift; sourceTree = "<group>"; };
-		CC9FD15E2A4322C80021C034 /* TodoListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoListViewModel.swift; sourceTree = "<group>"; };
 		CCBC107D2A48E1510013EA75 /* PersistentController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistentController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -106,8 +102,6 @@
 			isa = PBXGroup;
 			children = (
 				CC9FD1312A43017C0021C034 /* MinimalTodoApp.swift */,
-				CC9FD15C2A4322750021C034 /* TodoItem.swift */,
-				CC9FD15E2A4322C80021C034 /* TodoListViewModel.swift */,
 				CC9FD1332A43017C0021C034 /* ContentView.swift */,
 				CC3B142D2A48D0C2002E8BEE /* TodoListModel.xcdatamodeld */,
 				CC3B14302A48D1E8002E8BEE /* TodoListPersistenceController.swift */,
@@ -274,12 +268,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CC9FD15F2A4322C80021C034 /* TodoListViewModel.swift in Sources */,
 				CCBC107E2A48E1510013EA75 /* PersistentController.swift in Sources */,
 				CC3B142F2A48D0C2002E8BEE /* TodoListModel.xcdatamodeld in Sources */,
 				CC9FD1342A43017C0021C034 /* ContentView.swift in Sources */,
 				CC3B14312A48D1E8002E8BEE /* TodoListPersistenceController.swift in Sources */,
-				CC9FD15D2A4322750021C034 /* TodoItem.swift in Sources */,
 				CC9FD1322A43017C0021C034 /* MinimalTodoApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -1,71 +1,85 @@
 import CoreData
 
-class TodoListPersistenceController: ObservableObject {
-    let container: NSPersistentContainer
-    
-    @Published var items: [Item] = []
-    
-    init() {
-        container = NSPersistentContainer(name: "TodoListModel")
-        container.loadPersistentStores { description, error in
-            if let error = error {
-                fatalError("Error: \(error.localizedDescription)")
-            }
-        }
+final class TodoListPersistenceController: ObservableObject {
+    enum TodoFilter: String, CaseIterable {
+        case all
+        case done
+        case todo
+    }
+
+    @Published private(set) var items: [Item] = []
+    @Published var selectedFilter: TodoFilter = .all {
+        didSet { fetchItems() }
+    }
+
+    private let context: NSManagedObjectContext
+
+    init(context: NSManagedObjectContext) {
+        self.context = context
         fetchItems()
     }
-    
+
     func fetchItems() {
         let fetchRequest: NSFetchRequest<Item> = Item.fetchRequest()
-        
-        do {
-            items = try container.viewContext.fetch(fetchRequest)
-        } catch {
-            print("Failed to fetch items!")
-        }
-    }
-    
-    func addTask(task: String) {
-        let newItem = Item(context: container.viewContext)
-        newItem.task = task
-        newItem.isCompleted = false
-        newItem.id = UUID()
-        
-        saveContext()
-    }
-    
-    func toggleIsCompleted(forItemAtIndex index: Int) {
-        items[index].isCompleted.toggle()
-        saveContext()
-    }
-    
-    func removeTask(at offsets: IndexSet) {
-        for index in offsets {
-            let item = items[index]
-            container.viewContext.delete(item)
-        }
-        saveContext()
-    }
-    
-    func saveContext() {
-        if container.viewContext.hasChanges {
-            do {
-                try container.viewContext.save()
-                fetchItems()
-            } catch {
-                print("An error occurred while saving: \(error)")
-            }
-        }
-    }
-    
-    func filteredItems(for filter: ContentView.TodoFilter) -> [Item] {
-        switch filter {
+        fetchRequest.sortDescriptors = [
+            NSSortDescriptor(key: "isCompleted", ascending: true),
+            NSSortDescriptor(key: "createdAt", ascending: false)
+        ]
+
+        switch selectedFilter {
         case .all:
-            return items
+            fetchRequest.predicate = nil
         case .done:
-            return items.filter { $0.isCompleted }
+            fetchRequest.predicate = NSPredicate(format: "isCompleted == YES")
         case .todo:
-            return items.filter { !$0.isCompleted }
+            fetchRequest.predicate = NSPredicate(format: "isCompleted == NO")
+        }
+
+        do {
+            items = try context.fetch(fetchRequest)
+        } catch {
+            print("Failed to fetch items: \(error.localizedDescription)")
+            items = []
+        }
+    }
+
+    func addTask(task: String) {
+        let trimmedTask = task.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTask.isEmpty else { return }
+
+        let newItem = Item(context: context)
+        newItem.id = UUID()
+        newItem.task = trimmedTask
+        newItem.isCompleted = false
+        newItem.createdAt = Date()
+
+        saveContext()
+    }
+
+    func toggleIsCompleted(id: UUID?) {
+        guard let id,
+              let item = items.first(where: { $0.id == id }) else { return }
+
+        item.isCompleted.toggle()
+        saveContext()
+    }
+
+    func removeTask(id: UUID?) {
+        guard let id,
+              let item = items.first(where: { $0.id == id }) else { return }
+
+        context.delete(item)
+        saveContext()
+    }
+
+    private func saveContext() {
+        guard context.hasChanges else { return }
+
+        do {
+            try context.save()
+            fetchItems()
+        } catch {
+            print("An error occurred while saving: \(error.localizedDescription)")
         }
     }
 }
