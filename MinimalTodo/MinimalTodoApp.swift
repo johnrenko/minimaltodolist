@@ -43,7 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView(
             context: environment.context,
             xBookmarksSyncService: environment.xBookmarksSyncService,
-            capturesAuthenticationAnchor: true
+            capturesAuthenticationAnchor: true,
+            preferredPopoverHeightChanged: { [weak self] height in
+                self?.updatePopoverHeight(height)
+            }
         )
         .environment(\.managedObjectContext, environment.context)
 
@@ -66,5 +69,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else if let button = statusBarItem.button {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
+    }
+
+    private func updatePopoverHeight(_ height: CGFloat) {
+        let size = NSSize(width: popover.contentSize.width, height: height)
+        guard popover.contentSize != size else {
+            return
+        }
+
+        popover.contentSize = size
     }
 }

@@ -19,14 +19,17 @@
 
         <div id="app-status" class="status-pill status-neutral">Checking app…</div>
 
-        <label class="field" for="endpoint">
-          <span>MinimalTodo endpoint</span>
-          <input id="endpoint" name="endpoint" type="url" autocomplete="off" spellcheck="false">
-        </label>
+        <details class="details-panel">
+          <summary>Technical details</summary>
+          <label class="field" for="endpoint">
+            <span>MinimalTodo endpoint</span>
+            <input id="endpoint" name="endpoint" type="url" autocomplete="off" spellcheck="false">
+          </label>
+        </details>
 
-        <label class="toggle" for="replace-existing">
-          <input id="replace-existing" name="replace-existing" type="checkbox">
-          <span>Replace existing bookmarks inside MinimalTodo</span>
+        <label class="toggle" for="import-everything-again">
+          <input id="import-everything-again" name="import-everything-again" type="checkbox">
+          <span>Import everything again (not just new bookmarks)</span>
         </label>
 
         <div class="actions">

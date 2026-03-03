@@ -673,7 +673,8 @@ final class XBookmarksSyncService: ObservableObject {
             var response: [String: Any] = [
                 "status": "ok",
                 "ready": isExtensionImportServerRunning,
-                "bookmarkCount": bookmarks.count
+                "bookmarkCount": bookmarks.count,
+                "bookmarkIDs": bookmarks.map(\.id)
             ]
             response["updateSource"] = updateSource?.rawValue ?? NSNull()
             return .json(statusCode: 200, jsonObject: response)
