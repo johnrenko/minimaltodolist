@@ -8,6 +8,7 @@ MinimalTodo is a lightweight macOS menu bar todo app built with SwiftUI and Core
 - Marks tasks as done/undone by tapping the row.
 - Filters tasks by **All / Todo / Done**.
 - Persists tasks with Core Data so they survive app restarts.
+- Supports System/Light/Dark theme selection in the popover header.
 
 ## Project structure
 

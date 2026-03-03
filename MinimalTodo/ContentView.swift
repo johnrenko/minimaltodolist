@@ -2,13 +2,64 @@ import SwiftUI
 import CoreData
 
 struct ContentView: View {
+    private enum ThemePreference: String, CaseIterable {
+        case system
+        case light
+        case dark
+
+        var colorScheme: ColorScheme? {
+            switch self {
+            case .system:
+                return nil
+            case .light:
+                return .light
+            case .dark:
+                return .dark
+            }
+        }
+
+        var iconName: String {
+            switch self {
+            case .system:
+                return "circle.lefthalf.filled"
+            case .light:
+                return "sun.max.fill"
+            case .dark:
+                return "moon.fill"
+            }
+        }
+
+        var label: String {
+            rawValue.capitalized
+        }
+    }
+
+    @Environment(\.colorScheme) private var systemColorScheme
     @StateObject private var viewModel: TodoListPersistenceController
     @State private var newTask: String = ""
     @State private var includesDeadline = false
     @State private var selectedDeadline = Date()
+    @AppStorage("themePreference") private var themePreferenceRawValue = ThemePreference.system.rawValue
 
     init(context: NSManagedObjectContext) {
         _viewModel = StateObject(wrappedValue: TodoListPersistenceController(context: context))
+    }
+
+    private var themePreference: ThemePreference {
+        get { ThemePreference(rawValue: themePreferenceRawValue) ?? .system }
+        set { themePreferenceRawValue = newValue.rawValue }
+    }
+
+    private var effectiveColorScheme: ColorScheme {
+        themePreference.colorScheme ?? systemColorScheme
+    }
+
+    private var backgroundColor: Color {
+        effectiveColorScheme == .dark ? Color(red: 0.16, green: 0.17, blue: 0.2) : Color(red: 0.93, green: 0.95, blue: 0.96)
+    }
+
+    private var pendingCircleFillColor: Color {
+        effectiveColorScheme == .dark ? Color(red: 0.18, green: 0.19, blue: 0.22) : .white
     }
 
     var body: some View {
@@ -18,6 +69,21 @@ struct ContentView: View {
                     .font(.system(size: 16))
                     .bold()
                 Spacer()
+                Menu {
+                    ForEach(ThemePreference.allCases, id: \.self) { option in
+                        Button {
+                            themePreference = option
+                        } label: {
+                            Label(option.label, systemImage: option.iconName)
+                        }
+                    }
+                } label: {
+                    Image(systemName: themePreference.iconName)
+                        .font(.system(size: 13))
+                }
+                .menuStyle(.borderlessButton)
+                .help("Theme: \(themePreference.label)")
+
                 Text("\(viewModel.items.count) tasks")
                     .font(.system(size: 16))
             }
@@ -88,7 +154,7 @@ struct ContentView: View {
                             } else {
                                 Circle()
                                     .frame(width: 16, height: 16)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(pendingCircleFillColor)
                                     .overlay(
                                         Circle()
                                             .stroke(Color(hue: 0.528, saturation: 0.86, brightness: 0.64), lineWidth: 2)
@@ -132,8 +198,9 @@ struct ContentView: View {
                 }
             }
         }
-        .background(Color(red: 0.93, green: 0.95, blue: 0.96))
+        .background(backgroundColor)
         .cornerRadius(8)
+        .preferredColorScheme(themePreference.colorScheme)
     }
 
     private func addTask() {
