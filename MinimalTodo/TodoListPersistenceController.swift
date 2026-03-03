@@ -43,7 +43,7 @@ final class TodoListPersistenceController: ObservableObject {
         }
     }
 
-    func addTask(task: String) {
+    func addTask(task: String, deadline: Date? = nil) {
         let trimmedTask = task.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTask.isEmpty else { return }
 
@@ -52,6 +52,7 @@ final class TodoListPersistenceController: ObservableObject {
         newItem.task = trimmedTask
         newItem.isCompleted = false
         newItem.createdAt = Date()
+        newItem.deadline = deadline
 
         saveContext()
     }

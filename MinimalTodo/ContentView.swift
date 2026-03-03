@@ -4,6 +4,8 @@ import CoreData
 struct ContentView: View {
     @StateObject private var viewModel: TodoListPersistenceController
     @State private var newTask: String = ""
+    @State private var includesDeadline = false
+    @State private var selectedDeadline = Date()
 
     init(context: NSManagedObjectContext) {
         _viewModel = StateObject(wrappedValue: TodoListPersistenceController(context: context))
@@ -22,12 +24,29 @@ struct ContentView: View {
             .padding(.top, 16)
             .padding(.horizontal, 16)
 
-            HStack(spacing: 8) {
-                TextField("New task", text: $newTask)
-                    .onSubmit(addTask)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    TextField("New task", text: $newTask)
+                        .onSubmit(addTask)
 
-                Button("Add", action: addTask)
-                    .disabled(newTask.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button("Add", action: addTask)
+                        .disabled(newTask.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+
+                HStack(spacing: 12) {
+                    Toggle("Add deadline", isOn: $includesDeadline)
+                        .toggleStyle(.checkbox)
+
+                    if includesDeadline {
+                        DatePicker(
+                            "Deadline",
+                            selection: $selectedDeadline,
+                            displayedComponents: [.date]
+                        )
+                        .datePickerStyle(.compact)
+                        .labelsHidden()
+                    }
+                }
             }
             .padding(.horizontal, 16)
 
@@ -76,12 +95,20 @@ struct ContentView: View {
                                     )
                             }
 
-                            Text(item.task ?? "")
-                                .font(.system(size: 12))
-                                .foregroundColor(.primary)
-                                .frame(maxWidth: .infinity, minHeight: 14, maxHeight: 14, alignment: .topLeading)
-                                .strikethrough(item.isCompleted, color: .primary)
-                                .help(item.task ?? "")
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.task ?? "")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.primary)
+                                    .strikethrough(item.isCompleted, color: .primary)
+                                    .help(item.task ?? "")
+
+                                if let deadline = item.deadline {
+                                    Text(deadline, format: .dateTime.month(.abbreviated).day().year())
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .topLeading)
 
                             Spacer()
 
@@ -110,7 +137,12 @@ struct ContentView: View {
     }
 
     private func addTask() {
-        viewModel.addTask(task: newTask)
+        viewModel.addTask(
+            task: newTask,
+            deadline: includesDeadline ? selectedDeadline : nil
+        )
         newTask = ""
+        includesDeadline = false
+        selectedDeadline = Date()
     }
 }

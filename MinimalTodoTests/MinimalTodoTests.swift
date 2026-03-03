@@ -25,6 +25,15 @@ final class MinimalTodoTests: XCTestCase {
         XCTAssertEqual(controller.items.first?.isCompleted, false)
     }
 
+    func testAddTaskStoresDeadlineWhenProvided() throws {
+        let deadline = Calendar.current.date(byAdding: .day, value: 3, to: Date())!
+
+        controller.addTask(task: "Pay rent", deadline: deadline)
+
+        XCTAssertEqual(controller.items.count, 1)
+        XCTAssertEqual(controller.items.first?.deadline, deadline)
+    }
+
     func testToggleCompletionByIdentifier() throws {
         controller.addTask(task: "Ship feature")
         let id = controller.items.first?.id
