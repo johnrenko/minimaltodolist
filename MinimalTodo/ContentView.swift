@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import Combine
 
 struct ContentView: View {
     private enum ThemePreference: String, CaseIterable {
@@ -39,7 +40,35 @@ struct ContentView: View {
     @State private var newTask: String = ""
     @State private var includesDeadline = false
     @State private var selectedDeadline = Date()
+    @State private var pomodoroSecondsRemaining = 25 * 60
+    @State private var pomodoroMode: PomodoroMode = .work
+    @State private var isPomodoroRunning = false
     @AppStorage("themePreference") private var themePreferenceRawValue = ThemePreference.system.rawValue
+
+    private let pomodoroTicker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    private enum PomodoroMode: String {
+        case work
+        case shortBreak
+
+        var durationInSeconds: Int {
+            switch self {
+            case .work:
+                return 25 * 60
+            case .shortBreak:
+                return 5 * 60
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .work:
+                return "Work"
+            case .shortBreak:
+                return "Break"
+            }
+        }
+    }
 
     init(context: NSManagedObjectContext) {
         _viewModel = StateObject(wrappedValue: TodoListPersistenceController(context: context))
@@ -88,6 +117,39 @@ struct ContentView: View {
                     .font(.system(size: 16))
             }
             .padding(.top, 16)
+            .padding(.horizontal, 16)
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Pomodoro")
+                        .font(.system(size: 13, weight: .semibold))
+                    Spacer()
+                    Text(pomodoroMode.title)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+
+                HStack(alignment: .center, spacing: 12) {
+                    Text(pomodoroClock)
+                        .font(.system(size: 24, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+
+                    Spacer()
+
+                    Button(isPomodoroRunning ? "Pause" : "Start") {
+                        isPomodoroRunning.toggle()
+                    }
+
+                    Button("Reset", action: resetPomodoro)
+                        .disabled(pomodoroSecondsRemaining == pomodoroMode.durationInSeconds)
+                }
+
+                Picker("Timer mode", selection: $pomodoroMode) {
+                    Text("Work").tag(PomodoroMode.work)
+                    Text("Break").tag(PomodoroMode.shortBreak)
+                }
+                .pickerStyle(.segmented)
+            }
             .padding(.horizontal, 16)
 
             VStack(alignment: .leading, spacing: 8) {
@@ -201,6 +263,25 @@ struct ContentView: View {
         .background(backgroundColor)
         .cornerRadius(8)
         .preferredColorScheme(themePreference.colorScheme)
+        .onReceive(pomodoroTicker) { _ in
+            guard isPomodoroRunning else { return }
+
+            if pomodoroSecondsRemaining > 0 {
+                pomodoroSecondsRemaining -= 1
+            } else {
+                isPomodoroRunning = false
+                NSSound.beep()
+            }
+        }
+        .onChange(of: pomodoroMode) { _ in
+            resetPomodoro()
+        }
+    }
+
+    private var pomodoroClock: String {
+        let minutes = pomodoroSecondsRemaining / 60
+        let seconds = pomodoroSecondsRemaining % 60
+        return String(format: "%02d:%02d", minutes, seconds)
     }
 
     private func addTask() {
@@ -211,5 +292,10 @@ struct ContentView: View {
         newTask = ""
         includesDeadline = false
         selectedDeadline = Date()
+    }
+
+    private func resetPomodoro() {
+        isPomodoroRunning = false
+        pomodoroSecondsRemaining = pomodoroMode.durationInSeconds
     }
 }
