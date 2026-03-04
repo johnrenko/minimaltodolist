@@ -60,6 +60,7 @@ struct ContentView: View {
     @State private var isPomodoroRunning = false
     @State private var xBookmarksWindow: NSWindow?
     @State private var showsPaidXAPISetup = false
+    @State private var showsFreeChromeSyncSetup = false
     @State private var showsFreeSyncTechnicalDetails = false
     @AppStorage("themePreference") private var themePreferenceRawValue = ThemePreference.system.rawValue
     @ObservedObject private var xBookmarksSyncService: XBookmarksSyncService
@@ -150,7 +151,7 @@ struct ContentView: View {
         case .pomodoro:
             return PopoverHeight.pomodoro
         case .xBookmarks:
-            return showsPaidXAPISetup
+            return (showsFreeChromeSyncSetup || showsPaidXAPISetup)
                 ? PopoverHeight.xBookmarksExpanded
                 : PopoverHeight.xBookmarksCollapsed
         }
@@ -237,6 +238,17 @@ struct ContentView: View {
             updatePreferredPopoverHeight()
         }
         .onChange(of: showsPaidXAPISetup) { _ in
+            guard selectedTab == .xBookmarks else {
+                return
+            }
+
+            updatePreferredPopoverHeight()
+        }
+        .onChange(of: showsFreeChromeSyncSetup) { isExpanded in
+            if !isExpanded {
+                showsFreeSyncTechnicalDetails = false
+            }
+
             guard selectedTab == .xBookmarks else {
                 return
             }
@@ -466,7 +478,53 @@ struct ContentView: View {
                 .foregroundColor(.secondary)
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            DisclosureGroup(isExpanded: $showsFreeChromeSyncSetup) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Keep MinimalTodo open, load the included Chrome extension, then sync from your X bookmarks page. By default, only new bookmarks are imported.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 8) {
+                        Button("Open X Bookmarks") {
+                            openURL("https://x.com/i/bookmarks")
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+
+                    DisclosureGroup(isExpanded: $showsFreeSyncTechnicalDetails) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Import endpoint")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(.secondary)
+
+                                Spacer()
+
+                                Button("Copy") {
+                                    copyToPasteboard(xBookmarksSyncService.extensionImportEndpoint)
+                                }
+                                .buttonStyle(.link)
+                            }
+
+                            Text(xBookmarksSyncService.extensionImportEndpoint)
+                                .font(.system(size: 11, design: .monospaced))
+                                .textSelection(.enabled)
+
+                            if !xBookmarksSyncService.isExtensionImportServerRunning {
+                                Button("Retry Listener") {
+                                    xBookmarksSyncService.startExtensionImportListenerIfNeeded()
+                                }
+                                .buttonStyle(.bordered)
+                            }
+                        }
+                        .padding(.top, 4)
+                    } label: {
+                        Text("Technical details")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                }
+                .padding(.top, 6)
+            } label: {
                 HStack {
                     Text("Free Chrome Sync")
                         .font(.system(size: 12, weight: .semibold))
@@ -483,49 +541,6 @@ struct ContentView: View {
                             in: Capsule()
                         )
                         .foregroundColor(xBookmarksSyncService.isExtensionImportServerRunning ? .green : .orange)
-                }
-
-                Text("Keep MinimalTodo open, load the included Chrome extension, then sync from your X bookmarks page. By default, only new bookmarks are imported.")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-
-                HStack(spacing: 8) {
-                    Button("Open X Bookmarks") {
-                        openURL("https://x.com/i/bookmarks")
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-
-                DisclosureGroup(isExpanded: $showsFreeSyncTechnicalDetails) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Import endpoint")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.secondary)
-
-                            Spacer()
-
-                            Button("Copy") {
-                                copyToPasteboard(xBookmarksSyncService.extensionImportEndpoint)
-                            }
-                            .buttonStyle(.link)
-                        }
-
-                        Text(xBookmarksSyncService.extensionImportEndpoint)
-                            .font(.system(size: 11, design: .monospaced))
-                            .textSelection(.enabled)
-
-                        if !xBookmarksSyncService.isExtensionImportServerRunning {
-                            Button("Retry Listener") {
-                                xBookmarksSyncService.startExtensionImportListenerIfNeeded()
-                            }
-                            .buttonStyle(.bordered)
-                        }
-                    }
-                    .padding(.top, 4)
-                } label: {
-                    Text("Technical details")
-                        .font(.system(size: 11, weight: .semibold))
                 }
             }
             .padding(10)
@@ -721,7 +736,7 @@ struct ContentView: View {
             return "No bookmarks were returned by the X API yet."
         }
 
-        return "Use the free Chrome extension to import bookmarks, or expand the paid X API section if you want direct API sync."
+        return "Expand Free Chrome Sync to import bookmarks, or expand the paid X API section if you want direct API sync."
     }
 
     private func addTask() {
