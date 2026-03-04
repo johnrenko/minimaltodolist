@@ -317,7 +317,7 @@ struct ContentView: View {
                         DatePicker(
                             "Deadline",
                             selection: $selectedDeadline,
-                            displayedComponents: [.date]
+                            displayedComponents: [.date, .hourAndMinute]
                         )
                         .datePickerStyle(.compact)
                         .labelsHidden()
@@ -402,7 +402,7 @@ struct ContentView: View {
                                     .help(item.task ?? "")
 
                                 if let deadline = item.deadline {
-                                    Text(deadline, format: .dateTime.month(.abbreviated).day().year())
+                                    Text(deadline, format: .dateTime.month(.abbreviated).day().year().hour().minute())
                                         .font(.system(size: 11))
                                         .foregroundColor(.secondary)
                                 }
