@@ -65,14 +65,8 @@ struct ContentView: View {
     @State private var showsFreeChromeSyncSetup = false
     @State private var showsFreeSyncTechnicalDetails = false
     @AppStorage("themePreference") private var themePreferenceRawValue = ThemePreference.system.rawValue
-    @AppStorage("claudeUsage5hPercent") private var claudeUsage5hPercent: Int = -1
-    @AppStorage("claudeUsageWeeklyPercent") private var claudeUsageWeeklyPercent: Int = -1
-    @AppStorage("claudeUsage5hResetTimestamp") private var claudeUsage5hResetTimestamp: Double = 0
-    @AppStorage("claudeUsageWeeklyResetTimestamp") private var claudeUsageWeeklyResetTimestamp: Double = 0
-    @AppStorage("claudeUsageLastUpdatedTimestamp") private var claudeUsageLastUpdatedTimestamp: Double = 0
     @ObservedObject private var xBookmarksSyncService: XBookmarksSyncService
     @StateObject private var usageRecapService = UsageRecapService()
-    @StateObject private var claudeUsageService = ClaudeUsageService()
 
     private let capturesAuthenticationAnchor: Bool
     private let preferredPopoverHeightChanged: ((CGFloat) -> Void)?
@@ -244,13 +238,6 @@ struct ContentView: View {
             updatePreferredPopoverHeight()
             usageRecapService.refreshCodexUsage()
         }
-        .onReceive(claudeUsageService.$snapshot.compactMap { $0 }) { snapshot in
-            claudeUsage5hPercent = snapshot.fiveHourUsagePercent
-            claudeUsageWeeklyPercent = snapshot.weeklyUsagePercent
-            claudeUsage5hResetTimestamp = snapshot.fiveHourResetAt?.timeIntervalSince1970 ?? 0
-            claudeUsageWeeklyResetTimestamp = snapshot.weeklyResetAt?.timeIntervalSince1970 ?? 0
-            claudeUsageLastUpdatedTimestamp = snapshot.refreshedAt.timeIntervalSince1970
-        }
         .onReceive(pomodoroTicker) { _ in
             guard isPomodoroRunning else { return }
 
@@ -269,7 +256,6 @@ struct ContentView: View {
 
             if selectedTab == .usage {
                 usageRecapService.refreshCodexUsage()
-                claudeUsageService.refreshClaudeUsage()
             }
         }
         .onChange(of: showsPaidXAPISetup) { _ in
@@ -798,18 +784,12 @@ struct ContentView: View {
     }
 
     private var claudeUsageCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Claude")
                     .font(.system(size: 13, weight: .semibold))
 
                 Spacer()
-
-                Button("Refresh") {
-                    claudeUsageService.refreshClaudeUsage()
-                }
-                .buttonStyle(.bordered)
-                .disabled(claudeUsageService.isRefreshing)
 
                 Button("Open Usage Page") {
                     openURL("https://claude.ai/settings/usage")
@@ -817,56 +797,9 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
             }
 
-            Text("Pulls real percentages from Claude Code OAuth usage data.")
+            Text("Open Claude's usage page in your browser.")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
-
-            if let snapshot = displayedClaudeUsageSnapshot {
-                usageMetricRow(
-                    title: "5h usage",
-                    value: "\(snapshot.fiveHourUsagePercent)%"
-                )
-
-                ProgressView(value: Double(snapshot.fiveHourUsagePercent), total: 100)
-                    .tint(snapshot.fiveHourUsagePercent >= 80 ? .orange : .accentColor)
-
-                usageMetricRow(
-                    title: "Weekly usage",
-                    value: "\(snapshot.weeklyUsagePercent)%"
-                )
-
-                ProgressView(value: Double(snapshot.weeklyUsagePercent), total: 100)
-                    .tint(snapshot.weeklyUsagePercent >= 80 ? .orange : .accentColor)
-
-                if let fiveHourResetAt = snapshot.fiveHourResetAt {
-                    Text("5h resets \(fiveHourResetAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                }
-
-                if let weeklyResetAt = snapshot.weeklyResetAt {
-                    Text("Week resets \(weeklyResetAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                }
-
-                Text("Updated \(snapshot.refreshedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-            } else if claudeUsageService.isRefreshing {
-                ProgressView("Loading Claude usage…")
-                    .font(.system(size: 11))
-            } else {
-                Text("No Claude usage available yet.")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
-
-            if let error = claudeUsageService.error {
-                Text(error)
-                    .font(.system(size: 11))
-                    .foregroundColor(.red)
-            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -876,28 +809,6 @@ struct ContentView: View {
                 .stroke(glassCardBorderColor, lineWidth: 0.8)
         )
         .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
-    }
-
-    private var displayedClaudeUsageSnapshot: ClaudeUsageSnapshot? {
-        claudeUsageService.snapshot ?? cachedClaudeUsageSnapshot
-    }
-
-    private var cachedClaudeUsageSnapshot: ClaudeUsageSnapshot? {
-        guard claudeUsage5hPercent >= 0 || claudeUsageWeeklyPercent >= 0 else {
-            return nil
-        }
-
-        let refreshedAt = claudeUsageLastUpdatedTimestamp > 0
-            ? Date(timeIntervalSince1970: claudeUsageLastUpdatedTimestamp)
-            : .distantPast
-
-        return ClaudeUsageSnapshot(
-            fiveHourUsagePercent: max(claudeUsage5hPercent, 0),
-            weeklyUsagePercent: max(claudeUsageWeeklyPercent, 0),
-            fiveHourResetAt: claudeUsage5hResetTimestamp > 0 ? Date(timeIntervalSince1970: claudeUsage5hResetTimestamp) : nil,
-            weeklyResetAt: claudeUsageWeeklyResetTimestamp > 0 ? Date(timeIntervalSince1970: claudeUsageWeeklyResetTimestamp) : nil,
-            refreshedAt: refreshedAt
-        )
     }
 
     private func usageMetricRow(title: String, value: String) -> some View {

@@ -19,21 +19,22 @@
 | 2026-03-05 | Self | The Claude web-page import path was brittle and blocked by embedded login failures. | For this app, use Claude Code's local OAuth credentials from Keychain plus `GET https://api.anthropic.com/api/oauth/usage`; do not depend on `WKWebView`, browser automation, or manual inputs. |
 | 2026-03-05 | Self | Assumed the Claude OAuth usage endpoint behaved like a normal bearer endpoint without feature gating. | Include `anthropic-beta: oauth-2025-04-20` on `https://api.anthropic.com/api/oauth/usage` requests or the call will not return the expected consumer usage payload. |
 | 2026-03-05 | Self | Assumed Claude Code credential `expiresAt` would be ISO8601. | Parse `Claude Code-credentials` `claudeAiOauth.expiresAt` as a millisecond epoch first, then fall back to numeric-string or ISO8601 parsing. |
+| 2026-03-05 | User | Claude usage sync via OAuth/import was not worth the fragility; the user wants a simple browser handoff instead. | In this app, keep Claude as a passive `Open Usage Page` action unless the user explicitly asks to retry a deeper integration. |
 
 ## User Preferences
 - Keep X bookmark setup sections collapsed by default unless the UI needs to force onboarding context open.
+- Keep the Claude section simple: do not auto-fetch Claude usage in-app; leave a button that opens the usage page.
 
 ## Patterns That Work
 - The X Bookmarks tab uses `DisclosureGroup` state plus fixed popover heights in `ContentView.swift`; changes to expanded/collapsed defaults should update both.
 - For Codex usage recap, read recent local `~/.codex/sessions` or `~/.codex/archived_sessions` `rollout-*.jsonl` files and extract `token_count.rate_limits.primary/secondary.used_percent`.
-- For Claude usage, read the `Claude Code-credentials` Keychain item through Security.framework, decode `claudeAiOauth.accessToken`, and call `https://api.anthropic.com/api/oauth/usage` with `anthropic-beta: oauth-2025-04-20`; the response provides `five_hour` and `seven_day` utilization directly.
-- Keep Claude usage cached in `@AppStorage` and render `claudeUsageService.snapshot ?? cachedClaudeUsageSnapshot` so the UI preserves the last known values when a refresh fails.
+- For Claude in this app, a plain browser handoff is the least fragile path: keep a single button that opens `https://claude.ai/settings/usage`.
 - `NSStatusItem` visibility can be recovered by observing `isVisible` and setting it back to `true`; use an explicit `autosaveName` so hidden-state persistence is stable across launches.
 - For this app, a single clean launch reports `NSStatusItem.isVisible == true`; if recovery UI feels invisible, temporarily switch the app to `.regular`, use a floating restore window, and expose a direct restore action inside `ContentView`.
 
 ## Patterns To Avoid
 - Leaving setup copy fully expanded by default in the X Bookmarks tab makes the section dominate the small menu bar popover.
-- Do not scrape `claude.ai/settings/usage` from `WKWebView` or AppleScript-controlled browsers for this feature; the Claude Code OAuth endpoint is simpler and more reliable on this Mac.
+- Do not add Claude scraping, browser automation, or OAuth usage sync by default for this app; the user has explicitly preferred a simple usage-page button instead.
 
 ## Improvement Leads
 - Consider making X Bookmarks popover height track actual content size instead of the current fixed collapsed/expanded constants.
@@ -42,4 +43,4 @@
 
 ## Domain Notes
 - `MinimalTodo/ContentView.swift` owns the X Bookmarks setup UI and the popover height callback used by `MinimalTodoApp`.
-- `ContentView.swift` now includes a `Usage` tab; Codex values are refreshed via `UsageRecapService` from local rollout logs and Claude values are refreshed via `ClaudeUsageService` from Claude Code OAuth credentials, then cached in `@AppStorage`.
+- `ContentView.swift` now includes a `Usage` tab; Codex values are refreshed via `UsageRecapService` from local rollout logs and the Claude card is a passive button that opens Claude's usage page.
