@@ -65,14 +65,14 @@ struct ContentView: View {
     @State private var showsFreeChromeSyncSetup = false
     @State private var showsFreeSyncTechnicalDetails = false
     @AppStorage("themePreference") private var themePreferenceRawValue = ThemePreference.system.rawValue
-    @AppStorage("codexUsage5h") private var codexUsage5h = ""
-    @AppStorage("codexUsageWeekly") private var codexUsageWeekly = ""
-    @AppStorage("codexUsageLastUpdatedTimestamp") private var codexUsageLastUpdatedTimestamp: Double = 0
-    @AppStorage("claudeUsage5h") private var claudeUsage5h = ""
-    @AppStorage("claudeUsageWeekly") private var claudeUsageWeekly = ""
+    @AppStorage("claudeUsage5hPercent") private var claudeUsage5hPercent: Int = -1
+    @AppStorage("claudeUsageWeeklyPercent") private var claudeUsageWeeklyPercent: Int = -1
+    @AppStorage("claudeUsage5hResetTimestamp") private var claudeUsage5hResetTimestamp: Double = 0
+    @AppStorage("claudeUsageWeeklyResetTimestamp") private var claudeUsageWeeklyResetTimestamp: Double = 0
     @AppStorage("claudeUsageLastUpdatedTimestamp") private var claudeUsageLastUpdatedTimestamp: Double = 0
     @ObservedObject private var xBookmarksSyncService: XBookmarksSyncService
     @StateObject private var usageRecapService = UsageRecapService()
+    @StateObject private var claudeUsageService = ClaudeUsageService()
 
     private let capturesAuthenticationAnchor: Bool
     private let preferredPopoverHeightChanged: ((CGFloat) -> Void)?
@@ -183,6 +183,12 @@ struct ContentView: View {
                             Label(option.label, systemImage: option.iconName)
                         }
                     }
+
+                    Divider()
+
+                    Button("Restore Menu Bar Icon...") {
+                        (NSApp.delegate as? AppDelegate)?.showStatusItemRestoreInstructions()
+                    }
                 } label: {
                     Image(systemName: themePreference.iconName)
                         .font(.system(size: 13))
@@ -238,6 +244,13 @@ struct ContentView: View {
             updatePreferredPopoverHeight()
             usageRecapService.refreshCodexUsage()
         }
+        .onReceive(claudeUsageService.$snapshot.compactMap { $0 }) { snapshot in
+            claudeUsage5hPercent = snapshot.fiveHourUsagePercent
+            claudeUsageWeeklyPercent = snapshot.weeklyUsagePercent
+            claudeUsage5hResetTimestamp = snapshot.fiveHourResetAt?.timeIntervalSince1970 ?? 0
+            claudeUsageWeeklyResetTimestamp = snapshot.weeklyResetAt?.timeIntervalSince1970 ?? 0
+            claudeUsageLastUpdatedTimestamp = snapshot.refreshedAt.timeIntervalSince1970
+        }
         .onReceive(pomodoroTicker) { _ in
             guard isPomodoroRunning else { return }
 
@@ -256,6 +269,7 @@ struct ContentView: View {
 
             if selectedTab == .usage {
                 usageRecapService.refreshCodexUsage()
+                claudeUsageService.refreshClaudeUsage()
             }
         }
         .onChange(of: showsPaidXAPISetup) { _ in
@@ -726,35 +740,42 @@ struct ContentView: View {
                 .disabled(usageRecapService.isRefreshing)
             }
 
-            Text("Local estimate based on your Codex session database.")
+            Text("Pulls real percentages from recent local Codex rate-limit metadata.")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
 
             if let codexSnapshot = usageRecapService.codexSnapshot {
                 usageMetricRow(
                     title: "5h usage",
-                    value: formattedTokenCount(codexSnapshot.lastFiveHoursTokens)
+                    value: "\(codexSnapshot.lastFiveHoursPercent)%"
                 )
+
+                ProgressView(value: Double(codexSnapshot.lastFiveHoursPercent), total: 100)
+                    .tint(codexSnapshot.lastFiveHoursPercent >= 80 ? .orange : .accentColor)
 
                 usageMetricRow(
                     title: "Weekly usage",
-                    value: formattedTokenCount(codexSnapshot.lastWeekTokens)
+                    value: "\(codexSnapshot.lastWeekPercent)%"
                 )
+
+                ProgressView(value: Double(codexSnapshot.lastWeekPercent), total: 100)
+                    .tint(codexSnapshot.lastWeekPercent >= 80 ? .orange : .accentColor)
+
+                if let lastFiveHoursResetAt = codexSnapshot.lastFiveHoursResetAt {
+                    Text("5h resets \(lastFiveHoursResetAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
+                if let lastWeekResetAt = codexSnapshot.lastWeekResetAt {
+                    Text("Week resets \(lastWeekResetAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
 
                 Text("Updated \(codexSnapshot.refreshedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
                     .font(.system(size: 10))
                     .foregroundColor(.secondary)
-
-                HStack {
-                    Spacer()
-
-                    Button("Use Local Estimate") {
-                        codexUsage5h = formattedTokenCount(codexSnapshot.lastFiveHoursTokens)
-                        codexUsageWeekly = formattedTokenCount(codexSnapshot.lastWeekTokens)
-                        codexUsageLastUpdatedTimestamp = Date().timeIntervalSince1970
-                    }
-                    .buttonStyle(.link)
-                }
             } else if usageRecapService.isRefreshing {
                 ProgressView("Loading Codex usage…")
                     .font(.system(size: 11))
@@ -764,69 +785,6 @@ struct ContentView: View {
                 Text(codexError)
                     .font(.system(size: 11))
                     .foregroundColor(.red)
-            }
-
-            Divider()
-
-            Text("Your recap values")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.secondary)
-
-            HStack(spacing: 8) {
-                Text("5h usage")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .frame(width: 80, alignment: .leading)
-
-                TextField("e.g. 58%", text: $codexUsage5h)
-                    .textFieldStyle(.roundedBorder)
-
-                if let percentage = parsedUsagePercentage(codexUsage5h) {
-                    Text("\(Int(percentage))%")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundColor(.secondary)
-                        .frame(width: 44, alignment: .trailing)
-                }
-            }
-
-            if let fiveHourPercentage = parsedUsagePercentage(codexUsage5h) {
-                ProgressView(value: fiveHourPercentage, total: 100)
-                    .tint(fiveHourPercentage >= 80 ? .orange : .accentColor)
-            }
-
-            HStack(spacing: 8) {
-                Text("Weekly usage")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .frame(width: 80, alignment: .leading)
-
-                TextField("e.g. 33%", text: $codexUsageWeekly)
-                    .textFieldStyle(.roundedBorder)
-
-                if let percentage = parsedUsagePercentage(codexUsageWeekly) {
-                    Text("\(Int(percentage))%")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundColor(.secondary)
-                        .frame(width: 44, alignment: .trailing)
-                }
-            }
-
-            if let weeklyPercentage = parsedUsagePercentage(codexUsageWeekly) {
-                ProgressView(value: weeklyPercentage, total: 100)
-                    .tint(weeklyPercentage >= 80 ? .orange : .accentColor)
-            }
-
-            HStack {
-                Button("Update Timestamp") {
-                    codexUsageLastUpdatedTimestamp = Date().timeIntervalSince1970
-                }
-                .buttonStyle(.bordered)
-
-                if let codexUsageLastUpdated {
-                    Text("Updated \(codexUsageLastUpdated.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                }
             }
         }
         .padding(.horizontal, 16)
@@ -847,71 +805,67 @@ struct ContentView: View {
 
                 Spacer()
 
+                Button("Refresh") {
+                    claudeUsageService.refreshClaudeUsage()
+                }
+                .buttonStyle(.bordered)
+                .disabled(claudeUsageService.isRefreshing)
+
                 Button("Open Usage Page") {
                     openURL("https://claude.ai/settings/usage")
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
             }
 
-            Text("Fill in your 5h and weekly usage from claude.ai/settings/usage.")
+            Text("Pulls real percentages from Claude Code OAuth usage data.")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
 
-            HStack(spacing: 8) {
-                Text("5h usage")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .frame(width: 80, alignment: .leading)
+            if let snapshot = displayedClaudeUsageSnapshot {
+                usageMetricRow(
+                    title: "5h usage",
+                    value: "\(snapshot.fiveHourUsagePercent)%"
+                )
 
-                TextField("e.g. 63%", text: $claudeUsage5h)
-                    .textFieldStyle(.roundedBorder)
+                ProgressView(value: Double(snapshot.fiveHourUsagePercent), total: 100)
+                    .tint(snapshot.fiveHourUsagePercent >= 80 ? .orange : .accentColor)
 
-                if let percentage = parsedUsagePercentage(claudeUsage5h) {
-                    Text("\(Int(percentage))%")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundColor(.secondary)
-                        .frame(width: 44, alignment: .trailing)
-                }
-            }
+                usageMetricRow(
+                    title: "Weekly usage",
+                    value: "\(snapshot.weeklyUsagePercent)%"
+                )
 
-            if let fiveHourPercentage = parsedUsagePercentage(claudeUsage5h) {
-                ProgressView(value: fiveHourPercentage, total: 100)
-                    .tint(fiveHourPercentage >= 80 ? .orange : .accentColor)
-            }
+                ProgressView(value: Double(snapshot.weeklyUsagePercent), total: 100)
+                    .tint(snapshot.weeklyUsagePercent >= 80 ? .orange : .accentColor)
 
-            HStack(spacing: 8) {
-                Text("Weekly usage")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .frame(width: 80, alignment: .leading)
-
-                TextField("e.g. 42%", text: $claudeUsageWeekly)
-                    .textFieldStyle(.roundedBorder)
-
-                if let percentage = parsedUsagePercentage(claudeUsageWeekly) {
-                    Text("\(Int(percentage))%")
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundColor(.secondary)
-                        .frame(width: 44, alignment: .trailing)
-                }
-            }
-
-            if let weeklyPercentage = parsedUsagePercentage(claudeUsageWeekly) {
-                ProgressView(value: weeklyPercentage, total: 100)
-                    .tint(weeklyPercentage >= 80 ? .orange : .accentColor)
-            }
-
-            HStack {
-                Button("Update Timestamp") {
-                    claudeUsageLastUpdatedTimestamp = Date().timeIntervalSince1970
-                }
-                .buttonStyle(.bordered)
-
-                if let claudeUsageLastUpdated {
-                    Text("Updated \(claudeUsageLastUpdated.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+                if let fiveHourResetAt = snapshot.fiveHourResetAt {
+                    Text("5h resets \(fiveHourResetAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
+
+                if let weeklyResetAt = snapshot.weeklyResetAt {
+                    Text("Week resets \(weeklyResetAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
+                Text("Updated \(snapshot.refreshedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            } else if claudeUsageService.isRefreshing {
+                ProgressView("Loading Claude usage…")
+                    .font(.system(size: 11))
+            } else {
+                Text("No Claude usage available yet.")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
+            if let error = claudeUsageService.error {
+                Text(error)
+                    .font(.system(size: 11))
+                    .foregroundColor(.red)
             }
         }
         .padding(.horizontal, 16)
@@ -924,20 +878,26 @@ struct ContentView: View {
         .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
     }
 
-    private var codexUsageLastUpdated: Date? {
-        guard codexUsageLastUpdatedTimestamp > 0 else {
-            return nil
-        }
-
-        return Date(timeIntervalSince1970: codexUsageLastUpdatedTimestamp)
+    private var displayedClaudeUsageSnapshot: ClaudeUsageSnapshot? {
+        claudeUsageService.snapshot ?? cachedClaudeUsageSnapshot
     }
 
-    private var claudeUsageLastUpdated: Date? {
-        guard claudeUsageLastUpdatedTimestamp > 0 else {
+    private var cachedClaudeUsageSnapshot: ClaudeUsageSnapshot? {
+        guard claudeUsage5hPercent >= 0 || claudeUsageWeeklyPercent >= 0 else {
             return nil
         }
 
-        return Date(timeIntervalSince1970: claudeUsageLastUpdatedTimestamp)
+        let refreshedAt = claudeUsageLastUpdatedTimestamp > 0
+            ? Date(timeIntervalSince1970: claudeUsageLastUpdatedTimestamp)
+            : .distantPast
+
+        return ClaudeUsageSnapshot(
+            fiveHourUsagePercent: max(claudeUsage5hPercent, 0),
+            weeklyUsagePercent: max(claudeUsageWeeklyPercent, 0),
+            fiveHourResetAt: claudeUsage5hResetTimestamp > 0 ? Date(timeIntervalSince1970: claudeUsage5hResetTimestamp) : nil,
+            weeklyResetAt: claudeUsageWeeklyResetTimestamp > 0 ? Date(timeIntervalSince1970: claudeUsageWeeklyResetTimestamp) : nil,
+            refreshedAt: refreshedAt
+        )
     }
 
     private func usageMetricRow(title: String, value: String) -> some View {
@@ -949,23 +909,6 @@ struct ContentView: View {
             Text(value)
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
         }
-    }
-
-    private func formattedTokenCount(_ value: Int) -> String {
-        "\(value.formatted(.number.grouping(.automatic))) tokens"
-    }
-
-    private func parsedUsagePercentage(_ text: String) -> Double? {
-        let cleaned = text
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "%", with: "")
-            .replacingOccurrences(of: ",", with: ".")
-
-        guard let value = Double(cleaned), value.isFinite else {
-            return nil
-        }
-
-        return min(max(value, 0), 100)
     }
 
     private var pomodoroClock: String {

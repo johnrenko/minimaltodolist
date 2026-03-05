@@ -34,6 +34,7 @@ MinimalTodo is a lightweight macOS menu bar todo app built with SwiftUI and Core
 3. Build and run.
 
 When launched, the app places a todo icon in the menu bar. Click it to open the todo popover.
+If that icon gets cmd-dragged out of the menu bar, MinimalTodo opens a small help window that tells you to restore it from System Settings -> Menu Bar -> "Allow in the Menu Bar".
 
 ## Running tests
 
