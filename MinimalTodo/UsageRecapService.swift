@@ -1,8 +1,11 @@
+import Combine
 import Foundation
 
-struct CodexUsageSnapshot {
-    let lastFiveHoursTokens: Int
-    let lastWeekTokens: Int
+struct CodexUsageSnapshot: Sendable {
+    let lastFiveHoursPercent: Int
+    let lastWeekPercent: Int
+    let lastFiveHoursResetAt: Date?
+    let lastWeekResetAt: Date?
     let refreshedAt: Date
 }
 
@@ -20,138 +23,228 @@ final class UsageRecapService: ObservableObject {
         isRefreshing = true
         codexError = nil
 
-        Task {
-            defer { isRefreshing = false }
-
+        Task.detached(priority: .userInitiated) {
             do {
-                let snapshot = try await Task.detached(priority: .utility) {
-                    try Self.loadCodexUsageSnapshot(now: Date())
-                }.value
-                codexSnapshot = snapshot
-            } catch let usageError as UsageReadError {
-                codexError = usageError.localizedDescription
+                let snapshot = try loadCodexUsageSnapshot()
+
+                await MainActor.run {
+                    self.codexSnapshot = snapshot
+                    self.codexError = nil
+                    self.isRefreshing = false
+                }
             } catch {
-                codexError = "Could not read local Codex usage: \(error.localizedDescription)"
+                let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+
+                await MainActor.run {
+                    self.codexSnapshot = nil
+                    self.codexError = message
+                    self.isRefreshing = false
+                }
             }
         }
     }
+}
 
-    nonisolated private static func loadCodexUsageSnapshot(now: Date) throws -> CodexUsageSnapshot {
-        guard let databasePath = locateCodexStateDatabasePath() else {
-            throw UsageReadError.databaseNotFound
+private struct RolloutEvent: Decodable {
+    let timestamp: String?
+    let type: String
+    let payload: RolloutPayload?
+}
+
+private struct RolloutPayload: Decodable {
+    let type: String
+    let rateLimits: CodexRateLimits?
+
+    private enum CodingKeys: String, CodingKey {
+        case type
+        case rateLimits = "rate_limits"
+    }
+}
+
+private struct CodexRateLimits: Decodable {
+    let primary: CodexRateLimitWindow?
+    let secondary: CodexRateLimitWindow?
+}
+
+private struct CodexRateLimitWindow: Decodable {
+    let usedPercent: Double
+    let resetsAt: TimeInterval?
+
+    private enum CodingKeys: String, CodingKey {
+        case usedPercent = "used_percent"
+        case resetsAt = "resets_at"
+    }
+}
+
+private struct RolloutFile {
+    let url: URL
+    let modifiedAt: Date
+}
+
+private enum CodexUsageError: LocalizedError {
+    case noCodexHomes
+    case noRolloutFiles
+    case noRateLimitMetadata
+
+    var errorDescription: String? {
+        switch self {
+        case .noCodexHomes:
+            return "Could not find a local Codex home directory."
+        case .noRolloutFiles:
+            return "Could not find any local Codex rollout logs."
+        case .noRateLimitMetadata:
+            return "Could not find recent Codex rate-limit metadata in local session logs."
+        }
+    }
+}
+
+private let codexJSONDecoder: JSONDecoder = {
+    let decoder = JSONDecoder()
+    return decoder
+}()
+
+private let codexISO8601WithFractionalSeconds: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+}()
+
+private let codexISO8601Formatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+}()
+
+private func loadCodexUsageSnapshot() throws -> CodexUsageSnapshot {
+    let fileManager = FileManager.default
+    let codexHomes = codexHomeCandidates().filter { fileManager.fileExists(atPath: $0.path) }
+
+    guard !codexHomes.isEmpty else {
+        throw CodexUsageError.noCodexHomes
+    }
+
+    let rolloutFiles = codexHomes
+        .flatMap(rolloutFiles(in:))
+        .sorted { $0.modifiedAt > $1.modifiedAt }
+
+    guard !rolloutFiles.isEmpty else {
+        throw CodexUsageError.noRolloutFiles
+    }
+
+    for rolloutFile in rolloutFiles.prefix(40) {
+        if let snapshot = try codexSnapshot(from: rolloutFile) {
+            return snapshot
+        }
+    }
+
+    throw CodexUsageError.noRateLimitMetadata
+}
+
+private func codexHomeCandidates() -> [URL] {
+    let fileManager = FileManager.default
+    let username = NSUserName()
+    let homeDirectory = fileManager.homeDirectoryForCurrentUser.path
+
+    let rawCandidates = [
+        ProcessInfo.processInfo.environment["CODEX_HOME"],
+        NSHomeDirectoryForUser(username).map { "\($0)/.codex" },
+        "\(homeDirectory)/.codex",
+        "\(NSHomeDirectory())/.codex",
+        "/Users/\(username)/.codex"
+    ]
+
+    var seenPaths = Set<String>()
+
+    return rawCandidates
+        .compactMap { $0 }
+        .map { URL(fileURLWithPath: NSString(string: $0).expandingTildeInPath, isDirectory: true) }
+        .filter { seenPaths.insert($0.standardizedFileURL.path).inserted }
+}
+
+private func rolloutFiles(in codexHome: URL) -> [RolloutFile] {
+    ["sessions", "archived_sessions"].flatMap { subdirectory in
+        let directoryURL = codexHome.appendingPathComponent(subdirectory, isDirectory: true)
+        return rolloutFilesRecursively(in: directoryURL)
+    }
+}
+
+private func rolloutFilesRecursively(in directoryURL: URL) -> [RolloutFile] {
+    let fileManager = FileManager.default
+
+    guard fileManager.fileExists(atPath: directoryURL.path) else {
+        return []
+    }
+
+    guard let enumerator = fileManager.enumerator(
+        at: directoryURL,
+        includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey],
+        options: [.skipsHiddenFiles]
+    ) else {
+        return []
+    }
+
+    var files: [RolloutFile] = []
+
+    for case let fileURL as URL in enumerator {
+        guard fileURL.lastPathComponent.hasPrefix("rollout-"),
+              fileURL.pathExtension == "jsonl" else {
+            continue
         }
 
-        let nowTimestamp = Int(now.timeIntervalSince1970)
-        let fiveHourCutoff = nowTimestamp - (5 * 60 * 60)
-        let weeklyCutoff = nowTimestamp - (7 * 24 * 60 * 60)
+        let resourceValues = try? fileURL.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey])
 
-        let sql = """
-        SELECT
-            COALESCE(SUM(CASE WHEN updated_at >= \(fiveHourCutoff) THEN tokens_used ELSE 0 END), 0),
-            COALESCE(SUM(CASE WHEN updated_at >= \(weeklyCutoff) THEN tokens_used ELSE 0 END), 0)
-        FROM threads;
-        """
-
-        let queryOutput = try runSQLiteQuery(databasePath: databasePath, sql: sql)
-        let outputLine = queryOutput
-            .split(whereSeparator: \.isNewline)
-            .first
-            .map(String.init) ?? queryOutput
-
-        let values = outputLine.split(separator: "|", omittingEmptySubsequences: false)
-        guard values.count >= 2,
-              let fiveHourTokens = Int(values[0]),
-              let weeklyTokens = Int(values[1]) else {
-            throw UsageReadError.malformedQueryOutput(outputLine)
+        guard resourceValues?.isRegularFile == true else {
+            continue
         }
 
-        return CodexUsageSnapshot(
-            lastFiveHoursTokens: fiveHourTokens,
-            lastWeekTokens: weeklyTokens,
-            refreshedAt: now
+        files.append(
+            RolloutFile(
+                url: fileURL,
+                modifiedAt: resourceValues?.contentModificationDate ?? .distantPast
+            )
         )
     }
 
-    nonisolated private static func locateCodexStateDatabasePath() -> String? {
-        let codexHomeRaw = ProcessInfo.processInfo.environment["CODEX_HOME"] ?? "~/.codex"
-        let codexHome = (codexHomeRaw as NSString).expandingTildeInPath
-        let fileManager = FileManager.default
+    return files
+}
 
-        guard let entries = try? fileManager.contentsOfDirectory(
-            at: URL(fileURLWithPath: codexHome),
-            includingPropertiesForKeys: [.isRegularFileKey, .contentModificationDateKey],
-            options: [.skipsHiddenFiles]
-        ) else {
-            return nil
+private func codexSnapshot(from rolloutFile: RolloutFile) throws -> CodexUsageSnapshot? {
+    let fileContents = try Data(contentsOf: rolloutFile.url)
+    let lines = String(decoding: fileContents, as: UTF8.self).split(whereSeparator: \.isNewline)
+
+    for line in lines.reversed() {
+        guard let event = try? codexJSONDecoder.decode(RolloutEvent.self, from: Data(line.utf8)),
+              event.type == "event_msg",
+              event.payload?.type == "token_count",
+              let primaryWindow = event.payload?.rateLimits?.primary,
+              let secondaryWindow = event.payload?.rateLimits?.secondary else {
+            continue
         }
 
-        let candidates = entries.filter { url in
-            url.lastPathComponent.hasPrefix("state_") && url.lastPathComponent.hasSuffix(".sqlite")
-        }
+        let refreshedAt = event.timestamp.flatMap(parseCodexTimestamp) ?? rolloutFile.modifiedAt
 
-        let sortedCandidates = candidates.sorted { left, right in
-            let leftDate = (try? left.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-            let rightDate = (try? right.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-            return leftDate > rightDate
-        }
-
-        return sortedCandidates.first?.path
+        return CodexUsageSnapshot(
+            lastFiveHoursPercent: clampedPercentage(primaryWindow.usedPercent),
+            lastWeekPercent: clampedPercentage(secondaryWindow.usedPercent),
+            lastFiveHoursResetAt: primaryWindow.resetsAt.map(Date.init(timeIntervalSince1970:)),
+            lastWeekResetAt: secondaryWindow.resetsAt.map(Date.init(timeIntervalSince1970:)),
+            refreshedAt: refreshedAt
+        )
     }
 
-    nonisolated private static func runSQLiteQuery(databasePath: String, sql: String) throws -> String {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
-        process.arguments = [
-            "-readonly",
-            "-noheader",
-            "-separator",
-            "|",
-            databasePath,
-            sql
-        ]
+    return nil
+}
 
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
-        process.standardOutput = outputPipe
-        process.standardError = errorPipe
+private func clampedPercentage(_ value: Double) -> Int {
+    Int(value.rounded()).clamped(to: 0...100)
+}
 
-        do {
-            try process.run()
-        } catch {
-            throw UsageReadError.sqliteUnavailable
-        }
+private func parseCodexTimestamp(_ value: String) -> Date? {
+    codexISO8601WithFractionalSeconds.date(from: value) ?? codexISO8601Formatter.date(from: value)
+}
 
-        process.waitUntilExit()
-
-        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-        let outputString = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let errorString = String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-
-        guard process.terminationStatus == 0 else {
-            throw UsageReadError.queryFailed(errorString.isEmpty ? "sqlite3 exit code \(process.terminationStatus)." : errorString)
-        }
-
-        return outputString
-    }
-
-    private enum UsageReadError: LocalizedError {
-        case databaseNotFound
-        case sqliteUnavailable
-        case malformedQueryOutput(String)
-        case queryFailed(String)
-
-        var errorDescription: String? {
-            switch self {
-            case .databaseNotFound:
-                return "Could not find a local Codex state database in ~/.codex."
-            case .sqliteUnavailable:
-                return "sqlite3 is unavailable on this Mac."
-            case .malformedQueryOutput(let output):
-                return "Unexpected Codex usage output: \(output)"
-            case .queryFailed(let details):
-                return "Could not query Codex usage: \(details)"
-            }
-        }
+private extension Comparable {
+    func clamped(to limits: ClosedRange<Self>) -> Self {
+        min(max(self, limits.lowerBound), limits.upperBound)
     }
 }
