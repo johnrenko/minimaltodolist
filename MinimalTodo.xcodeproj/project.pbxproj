@@ -17,8 +17,6 @@
 		CC9FD14E2A43017E0021C034 /* MinimalTodoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD14D2A43017E0021C034 /* MinimalTodoUITests.swift */; };
 		CC9FD1502A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD14F2A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift */; };
 		CCBC107E2A48E1510013EA75 /* PersistentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBC107D2A48E1510013EA75 /* PersistentController.swift */; };
-		CCD2CC012B9C400000A1B2C3 /* ClaudeUsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD2CC002B9C400000A1B2C3 /* ClaudeUsageService.swift */; };
-		CCD2CC032B9C400000A1B2C3 /* ClaudeUsageServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD2CC022B9C400000A1B2C3 /* ClaudeUsageServiceTests.swift */; };
 		CCF0AA112B9C100000A1B2C3 /* XBookmarksSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF0AA102B9C100000A1B2C3 /* XBookmarksSyncService.swift */; };
 		CCF0AA132B9C200000A1B2C3 /* UsageRecapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF0AA122B9C200000A1B2C3 /* UsageRecapService.swift */; };
 /* End PBXBuildFile section */
@@ -55,8 +53,6 @@
 		CC9FD14D2A43017E0021C034 /* MinimalTodoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoUITests.swift; sourceTree = "<group>"; };
 		CC9FD14F2A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		CCBC107D2A48E1510013EA75 /* PersistentController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistentController.swift; sourceTree = "<group>"; };
-		CCD2CC002B9C400000A1B2C3 /* ClaudeUsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeUsageService.swift; sourceTree = "<group>"; };
-		CCD2CC022B9C400000A1B2C3 /* ClaudeUsageServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeUsageServiceTests.swift; sourceTree = "<group>"; };
 		CCF0AA102B9C100000A1B2C3 /* XBookmarksSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XBookmarksSyncService.swift; sourceTree = "<group>"; };
 		CCF0AA122B9C200000A1B2C3 /* UsageRecapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRecapService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -114,7 +110,6 @@
 				CC3B142D2A48D0C2002E8BEE /* TodoListModel.xcdatamodeld */,
 				CC3B14302A48D1E8002E8BEE /* TodoListPersistenceController.swift */,
 				CCBC107D2A48E1510013EA75 /* PersistentController.swift */,
-				CCD2CC002B9C400000A1B2C3 /* ClaudeUsageService.swift */,
 				CCF0AA102B9C100000A1B2C3 /* XBookmarksSyncService.swift */,
 				CCF0AA122B9C200000A1B2C3 /* UsageRecapService.swift */,
 				CC9FD1352A43017E0021C034 /* Assets.xcassets */,
@@ -135,7 +130,6 @@
 		CC9FD1422A43017E0021C034 /* MinimalTodoTests */ = {
 			isa = PBXGroup;
 			children = (
-				CCD2CC022B9C400000A1B2C3 /* ClaudeUsageServiceTests.swift */,
 				CC9FD1432A43017E0021C034 /* MinimalTodoTests.swift */,
 			);
 			path = MinimalTodoTests;
@@ -282,7 +276,6 @@
 			files = (
 				CCBC107E2A48E1510013EA75 /* PersistentController.swift in Sources */,
 				CC3B142F2A48D0C2002E8BEE /* TodoListModel.xcdatamodeld in Sources */,
-				CCD2CC012B9C400000A1B2C3 /* ClaudeUsageService.swift in Sources */,
 				CC9FD1342A43017C0021C034 /* ContentView.swift in Sources */,
 				CC3B14312A48D1E8002E8BEE /* TodoListPersistenceController.swift in Sources */,
 				CCF0AA112B9C100000A1B2C3 /* XBookmarksSyncService.swift in Sources */,
@@ -295,7 +288,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CCD2CC032B9C400000A1B2C3 /* ClaudeUsageServiceTests.swift in Sources */,
 				CC9FD1442A43017E0021C034 /* MinimalTodoTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
