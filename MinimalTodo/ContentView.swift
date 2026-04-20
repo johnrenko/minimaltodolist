@@ -51,9 +51,6 @@ struct ContentView: View {
 
     @Environment(\.colorScheme) private var systemColorScheme
     @StateObject private var viewModel: TodoListPersistenceController
-    @State private var newTask: String = ""
-    @State private var includesDeadline = false
-    @State private var selectedDeadline = Date()
     @State private var selectedTab: AppTab = .todo
     @State private var pomodoroSecondsRemaining = 25 * 60
     @State private var pomodoroMode: PomodoroMode = .work
@@ -199,7 +196,8 @@ struct ContentView: View {
                 case .xBookmarks:
                     xBookmarksSection
                 case .todo:
-                    todoSection
+                    TodoFeatureView(viewModel: viewModel)
+                        .padding(.horizontal, 10)
                 }
             }
         }
@@ -287,162 +285,6 @@ struct ContentView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-    }
-
-    private var todoSection: some View {
-        VStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    TextField("New task", text: $newTask)
-                        .textFieldStyle(.plain)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(glassCardBorderColor, lineWidth: 0.8)
-                        )
-                        .onSubmit(addTask)
-
-                    Button("Add", action: addTask)
-                        .buttonStyle(.borderedProminent)
-                        .disabled(newTask.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-
-                HStack(spacing: 12) {
-                    Toggle("Add deadline", isOn: $includesDeadline)
-                        .toggleStyle(.checkbox)
-
-                    if includesDeadline {
-                        DatePicker(
-                            "Deadline",
-                            selection: $selectedDeadline,
-                            displayedComponents: [.date]
-                        )
-                        .datePickerStyle(.compact)
-                        .labelsHidden()
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(glassCardBorderColor, lineWidth: 0.8)
-            )
-            .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
-            .padding(.horizontal, 10)
-
-            Picker("", selection: $viewModel.selectedFilter) {
-                Text("All").tag(TodoListPersistenceController.TodoFilter.all)
-                Text("Todo").tag(TodoListPersistenceController.TodoFilter.todo)
-                Text("Done").tag(TodoListPersistenceController.TodoFilter.done)
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding(.vertical, 8)
-            .padding(.trailing, 16)
-            .padding(.leading, 8)
-            .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(glassCardBorderColor, lineWidth: 0.8)
-            )
-            .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
-            .padding(.horizontal, 10)
-
-            if viewModel.items.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "checklist")
-                        .font(.system(size: 24))
-                    Text("No tasks")
-                        .font(.headline)
-                    Text("Add a task to get started.")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(glassCardBorderColor, lineWidth: 0.8)
-                )
-                .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
-                .padding(.horizontal, 10)
-            } else {
-                List {
-                    ForEach(viewModel.items) { item in
-                        HStack(alignment: .center, spacing: 12) {
-                            if item.isCompleted {
-                                ZStack {
-                                    Circle()
-                                        .frame(width: 16, height: 16)
-                                        .foregroundColor(Color(hue: 0.528, saturation: 0.86, brightness: 0.64))
-
-                                    Image("check")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 8, height: 8)
-                                }
-                            } else {
-                                Circle()
-                                    .frame(width: 16, height: 16)
-                                    .foregroundColor(pendingCircleFillColor)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(Color(hue: 0.528, saturation: 0.86, brightness: 0.64), lineWidth: 2)
-                                    )
-                            }
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(item.task ?? "")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.primary)
-                                    .strikethrough(item.isCompleted, color: .primary)
-                                    .help(item.task ?? "")
-
-                                if let deadline = item.deadline {
-                                    Text(deadline, format: .dateTime.month(.abbreviated).day().year())
-                                        .font(.system(size: 11))
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .topLeading)
-
-                            Spacer()
-
-                            Button(action: {
-                                viewModel.removeTask(id: item.id)
-                            }) {
-                                Image("trash")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 12, height: 12)
-                            }
-                            .accessibilityLabel("Delete task")
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            viewModel.toggleIsCompleted(id: item.id)
-                        }
-                        .listRowBackground(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(glassCardBaseColor)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .stroke(glassCardBorderColor, lineWidth: 0.8)
-                                )
-                                .padding(.vertical, 3)
-                        )
-                        .padding(.leading, 2)
-                    }
-                }
-                .scrollContentBackground(.hidden)
-                .background(.clear)
-                .padding(.horizontal, 10)
-            }
-        }
     }
 
     private var xBookmarksSection: some View {
@@ -722,16 +564,6 @@ struct ContentView: View {
         }
 
         return "Use the free Chrome extension to import bookmarks, or expand the paid X API section if you want direct API sync."
-    }
-
-    private func addTask() {
-        viewModel.addTask(
-            task: newTask,
-            deadline: includesDeadline ? selectedDeadline : nil
-        )
-        newTask = ""
-        includesDeadline = false
-        selectedDeadline = Date()
     }
 
     private func resetPomodoro() {

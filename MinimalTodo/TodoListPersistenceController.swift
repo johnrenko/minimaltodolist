@@ -13,10 +13,24 @@ final class TodoListPersistenceController: ObservableObject {
     }
 
     private let context: NSManagedObjectContext
+    private var contextObserver: NSObjectProtocol?
 
     init(context: NSManagedObjectContext) {
         self.context = context
+        contextObserver = NotificationCenter.default.addObserver(
+            forName: .NSManagedObjectContextObjectsDidChange,
+            object: context,
+            queue: .main
+        ) { [weak self] notification in
+            self?.handleContextObjectsDidChange(notification)
+        }
         fetchItems()
+    }
+
+    deinit {
+        if let contextObserver {
+            NotificationCenter.default.removeObserver(contextObserver)
+        }
     }
 
     func fetchItems() {
@@ -81,6 +95,31 @@ final class TodoListPersistenceController: ObservableObject {
             fetchItems()
         } catch {
             print("An error occurred while saving: \(error.localizedDescription)")
+        }
+    }
+
+    private func handleContextObjectsDidChange(_ notification: Notification) {
+        guard notificationContainsRelevantItemChanges(notification) else {
+            return
+        }
+
+        fetchItems()
+    }
+
+    private func notificationContainsRelevantItemChanges(_ notification: Notification) -> Bool {
+        let keys = [
+            NSInsertedObjectsKey,
+            NSUpdatedObjectsKey,
+            NSDeletedObjectsKey,
+            NSRefreshedObjectsKey
+        ]
+
+        return keys.contains { key in
+            guard let objects = notification.userInfo?[key] as? Set<NSManagedObject> else {
+                return false
+            }
+
+            return objects.contains(where: { $0.entity.name == "Item" })
         }
     }
 }
