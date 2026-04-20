@@ -3,11 +3,22 @@ import CoreData
 struct PersistenceController {
     static let cloudKitContainerIdentifier = "iCloud.JD.MinimalTodo"
     static let shared = PersistenceController()
+    private static let managedObjectModel: NSManagedObjectModel = {
+        let bundle = Bundle(for: ModelBundleLocator.self)
+        guard let modelURL = bundle.url(forResource: "TodoListModel", withExtension: "momd"),
+              let model = NSManagedObjectModel(contentsOf: modelURL) else {
+            fatalError("Unable to load TodoListModel from bundle \(bundle.bundlePath).")
+        }
+        return model
+    }()
 
     let container: NSPersistentCloudKitContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentCloudKitContainer(name: "TodoListModel")
+        container = NSPersistentCloudKitContainer(
+            name: "TodoListModel",
+            managedObjectModel: Self.managedObjectModel
+        )
 
         guard let description = container.persistentStoreDescriptions.first else {
             fatalError("Missing persistent store description.")
@@ -16,7 +27,9 @@ struct PersistenceController {
         let usesEphemeralStore = inMemory || Self.isRunningTests
 
         if usesEphemeralStore {
-            description.url = URL(fileURLWithPath: "/dev/null")
+            // Keep previews and test hosts entirely local so they don't require CloudKit setup.
+            description.type = NSInMemoryStoreType
+            description.cloudKitContainerOptions = nil
         } else {
             description.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(
                 containerIdentifier: Self.cloudKitContainerIdentifier
@@ -59,6 +72,10 @@ struct PersistenceController {
     }
 
     private static var isRunningTests: Bool {
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        let environment = ProcessInfo.processInfo.environment
+        return environment["XCTestConfigurationFilePath"] != nil
+            || environment["XCTestBundlePath"] != nil
     }
 }
+
+private final class ModelBundleLocator: NSObject {}
