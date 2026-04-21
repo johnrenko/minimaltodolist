@@ -11,6 +11,7 @@ final class MinimalTodoiOSUITestsLaunchTests: XCTestCase {
 
     func testLaunch() throws {
         let app = XCUIApplication()
+        app.launchArguments.append("-ui-testing")
         app.launch()
 
         XCTAssertTrue(app.navigationBars["Todos"].waitForExistence(timeout: 5))

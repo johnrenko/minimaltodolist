@@ -1,12 +1,18 @@
 import XCTest
 
 final class MinimalTodoiOSUITests: XCTestCase {
+    private func makeApp() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments.append("-ui-testing")
+        return app
+    }
+
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
 
     func testTodoFlowSmoke() throws {
-        let app = XCUIApplication()
+        let app = makeApp()
         app.launch()
 
         let taskField = app.textFields["New task"]
@@ -15,16 +21,17 @@ final class MinimalTodoiOSUITests: XCTestCase {
         taskField.typeText("Smoke task")
 
         app.buttons["Add"].tap()
-        XCTAssertTrue(app.buttons["Smoke task"].waitForExistence(timeout: 5))
+        let smokeTaskButton = app.buttons["Smoke task"].firstMatch
+        XCTAssertTrue(smokeTaskButton.waitForExistence(timeout: 5))
 
-        app.buttons["Smoke task"].tap()
+        smokeTaskButton.tap()
         app.buttons["Done"].tap()
-        XCTAssertTrue(app.buttons["Smoke task"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Smoke task"].firstMatch.waitForExistence(timeout: 5))
 
         app.buttons["Todo"].tap()
         XCTAssertFalse(app.buttons["Smoke task"].exists)
 
         app.buttons["All"].tap()
-        XCTAssertTrue(app.buttons["Smoke task"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Smoke task"].firstMatch.waitForExistence(timeout: 5))
     }
 }

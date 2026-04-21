@@ -88,7 +88,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private lazy var statusItemRestoreWindow: NSWindow = makeStatusItemRestoreWindow()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        environment.xBookmarksSyncService.startExtensionImportListenerIfNeeded()
+        if !PersistenceController.isRunningTests {
+            environment.xBookmarksSyncService.startExtensionImportListenerIfNeeded()
+        }
 
         let contentView = ContentView(
             context: environment.context,

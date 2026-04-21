@@ -71,10 +71,12 @@ struct PersistenceController {
         }
     }
 
-    private static var isRunningTests: Bool {
+    static var isRunningTests: Bool {
         let environment = ProcessInfo.processInfo.environment
+        let arguments = ProcessInfo.processInfo.arguments
         return environment["XCTestConfigurationFilePath"] != nil
             || environment["XCTestBundlePath"] != nil
+            || arguments.contains("-ui-testing")
     }
 }
 
