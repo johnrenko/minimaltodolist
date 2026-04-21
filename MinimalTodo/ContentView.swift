@@ -53,9 +53,6 @@ struct ContentView: View {
 
     @Environment(\.colorScheme) private var systemColorScheme
     @StateObject private var viewModel: TodoListPersistenceController
-    @State private var newTask: String = ""
-    @State private var includesDeadline = false
-    @State private var selectedDeadline = Date()
     @State private var selectedTab: AppTab = .todo
     @State private var pomodoroSecondsRemaining = 25 * 60
     @State private var pomodoroMode: PomodoroMode = .work
@@ -214,7 +211,8 @@ struct ContentView: View {
                 case .usage:
                     usageSection
                 case .todo:
-                    todoSection
+                    TodoFeatureView(viewModel: viewModel)
+                        .padding(.horizontal, 10)
                 }
             }
         }
@@ -880,16 +878,6 @@ struct ContentView: View {
         }
 
         return "Expand Free Chrome Sync to import bookmarks, or expand the paid X API section if you want direct API sync."
-    }
-
-    private func addTask() {
-        viewModel.addTask(
-            task: newTask,
-            deadline: includesDeadline ? selectedDeadline : nil
-        )
-        newTask = ""
-        includesDeadline = false
-        selectedDeadline = Date()
     }
 
     private func resetPomodoro() {

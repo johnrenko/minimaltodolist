@@ -18,6 +18,16 @@
 		CC9FD1502A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9FD14F2A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift */; };
 		CCBC107E2A48E1510013EA75 /* PersistentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBC107D2A48E1510013EA75 /* PersistentController.swift */; };
 		CCF0AA112B9C100000A1B2C3 /* XBookmarksSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF0AA102B9C100000A1B2C3 /* XBookmarksSyncService.swift */; };
+		D10000000000000000000001 /* TodoFeatureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1000000000000000000000D /* TodoFeatureView.swift */; };
+		D10000000000000000000002 /* TodoFeatureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1000000000000000000000D /* TodoFeatureView.swift */; };
+		D10000000000000000000003 /* TodoListModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CC3B142D2A48D0C2002E8BEE /* TodoListModel.xcdatamodeld */; };
+		D10000000000000000000004 /* TodoListPersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3B14302A48D1E8002E8BEE /* TodoListPersistenceController.swift */; };
+		D10000000000000000000005 /* PersistentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBC107D2A48E1510013EA75 /* PersistentController.swift */; };
+		D10000000000000000000006 /* MinimalTodoiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1000000000000000000000F /* MinimalTodoiOSApp.swift */; };
+		D10000000000000000000007 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000010 /* Assets.xcassets */; };
+		D10000000000000000000008 /* MinimalTodoiOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000013 /* MinimalTodoiOSTests.swift */; };
+		D10000000000000000000009 /* MinimalTodoiOSUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000015 /* MinimalTodoiOSUITests.swift */; };
+		D1000000000000000000000A /* MinimalTodoiOSUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000016 /* MinimalTodoiOSUITestsLaunchTests.swift */; };
 		CCF0AA132B9C200000A1B2C3 /* UsageRecapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF0AA122B9C200000A1B2C3 /* UsageRecapService.swift */; };
 /* End PBXBuildFile section */
 
@@ -35,6 +45,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = CC9FD12D2A43017C0021C034;
 			remoteInfo = MinimalTodo;
+		};
+		D1000000000000000000000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CC9FD1262A43017C0021C034 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D1000000000000000000001D;
+			remoteInfo = MinimalTodoiOS;
+		};
+		D1000000000000000000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CC9FD1262A43017C0021C034 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D1000000000000000000001D;
+			remoteInfo = MinimalTodoiOS;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -54,6 +78,17 @@
 		CC9FD14F2A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		CCBC107D2A48E1510013EA75 /* PersistentController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistentController.swift; sourceTree = "<group>"; };
 		CCF0AA102B9C100000A1B2C3 /* XBookmarksSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XBookmarksSyncService.swift; sourceTree = "<group>"; };
+		D1000000000000000000000D /* TodoFeatureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoFeatureView.swift; sourceTree = "<group>"; };
+		D1000000000000000000000E /* MinimalTodoiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MinimalTodoiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D1000000000000000000000F /* MinimalTodoiOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoiOSApp.swift; sourceTree = "<group>"; };
+		D10000000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D10000000000000000000011 /* MinimalTodoiOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MinimalTodoiOS.entitlements; sourceTree = "<group>"; };
+		D10000000000000000000012 /* MinimalTodoiOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MinimalTodoiOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D10000000000000000000013 /* MinimalTodoiOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoiOSTests.swift; sourceTree = "<group>"; };
+		D10000000000000000000014 /* MinimalTodoiOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MinimalTodoiOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D10000000000000000000015 /* MinimalTodoiOSUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoiOSUITests.swift; sourceTree = "<group>"; };
+		D10000000000000000000016 /* MinimalTodoiOSUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoiOSUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		D10000000000000000000031 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CCF0AA122B9C200000A1B2C3 /* UsageRecapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRecapService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -79,6 +114,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D10000000000000000000017 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D10000000000000000000018 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D10000000000000000000019 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -88,6 +144,9 @@
 				CC9FD1302A43017C0021C034 /* MinimalTodo */,
 				CC9FD1422A43017E0021C034 /* MinimalTodoTests */,
 				CC9FD14C2A43017E0021C034 /* MinimalTodoUITests */,
+				D1000000000000000000001A /* MinimalTodoiOS */,
+				D1000000000000000000001B /* MinimalTodoiOSTests */,
+				D1000000000000000000001C /* MinimalTodoiOSUITests */,
 				CC9FD12F2A43017C0021C034 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -98,6 +157,9 @@
 				CC9FD12E2A43017C0021C034 /* MinimalTodo.app */,
 				CC9FD13F2A43017E0021C034 /* MinimalTodoTests.xctest */,
 				CC9FD1492A43017E0021C034 /* MinimalTodoUITests.xctest */,
+				D1000000000000000000000E /* MinimalTodoiOS.app */,
+				D10000000000000000000012 /* MinimalTodoiOSTests.xctest */,
+				D10000000000000000000014 /* MinimalTodoiOSUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -110,6 +172,7 @@
 				CC3B142D2A48D0C2002E8BEE /* TodoListModel.xcdatamodeld */,
 				CC3B14302A48D1E8002E8BEE /* TodoListPersistenceController.swift */,
 				CCBC107D2A48E1510013EA75 /* PersistentController.swift */,
+				D1000000000000000000000D /* TodoFeatureView.swift */,
 				CCF0AA102B9C100000A1B2C3 /* XBookmarksSyncService.swift */,
 				CCF0AA122B9C200000A1B2C3 /* UsageRecapService.swift */,
 				CC9FD1352A43017E0021C034 /* Assets.xcassets */,
@@ -142,6 +205,34 @@
 				CC9FD14F2A43017E0021C034 /* MinimalTodoUITestsLaunchTests.swift */,
 			);
 			path = MinimalTodoUITests;
+			sourceTree = "<group>";
+		};
+		D1000000000000000000001A /* MinimalTodoiOS */ = {
+			isa = PBXGroup;
+			children = (
+				D1000000000000000000000F /* MinimalTodoiOSApp.swift */,
+				D10000000000000000000031 /* Info.plist */,
+				D10000000000000000000010 /* Assets.xcassets */,
+				D10000000000000000000011 /* MinimalTodoiOS.entitlements */,
+			);
+			path = MinimalTodoiOS;
+			sourceTree = "<group>";
+		};
+		D1000000000000000000001B /* MinimalTodoiOSTests */ = {
+			isa = PBXGroup;
+			children = (
+				D10000000000000000000013 /* MinimalTodoiOSTests.swift */,
+			);
+			path = MinimalTodoiOSTests;
+			sourceTree = "<group>";
+		};
+		D1000000000000000000001C /* MinimalTodoiOSUITests */ = {
+			isa = PBXGroup;
+			children = (
+				D10000000000000000000015 /* MinimalTodoiOSUITests.swift */,
+				D10000000000000000000016 /* MinimalTodoiOSUITestsLaunchTests.swift */,
+			);
+			path = MinimalTodoiOSUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -200,6 +291,59 @@
 			productReference = CC9FD1492A43017E0021C034 /* MinimalTodoUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		D1000000000000000000001D /* MinimalTodoiOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D1000000000000000000002E /* Build configuration list for PBXNativeTarget "MinimalTodoiOS" */;
+			buildPhases = (
+				D10000000000000000000023 /* Sources */,
+				D10000000000000000000017 /* Frameworks */,
+				D10000000000000000000020 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MinimalTodoiOS;
+			productName = MinimalTodoiOS;
+			productReference = D1000000000000000000000E /* MinimalTodoiOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D1000000000000000000001E /* MinimalTodoiOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D1000000000000000000002F /* Build configuration list for PBXNativeTarget "MinimalTodoiOSTests" */;
+			buildPhases = (
+				D10000000000000000000024 /* Sources */,
+				D10000000000000000000018 /* Frameworks */,
+				D10000000000000000000021 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D10000000000000000000026 /* PBXTargetDependency */,
+			);
+			name = MinimalTodoiOSTests;
+			productName = MinimalTodoiOSTests;
+			productReference = D10000000000000000000012 /* MinimalTodoiOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		D1000000000000000000001F /* MinimalTodoiOSUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D10000000000000000000030 /* Build configuration list for PBXNativeTarget "MinimalTodoiOSUITests" */;
+			buildPhases = (
+				D10000000000000000000025 /* Sources */,
+				D10000000000000000000019 /* Frameworks */,
+				D10000000000000000000022 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D10000000000000000000027 /* PBXTargetDependency */,
+			);
+			name = MinimalTodoiOSUITests;
+			productName = MinimalTodoiOSUITests;
+			productReference = D10000000000000000000014 /* MinimalTodoiOSUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -212,6 +356,14 @@
 				TargetAttributes = {
 					CC9FD12D2A43017C0021C034 = {
 						CreatedOnToolsVersion = 14.3.1;
+						SystemCapabilities = {
+							com.apple.Push = {
+								enabled = 1;
+							};
+							com.apple.iCloud = {
+								enabled = 1;
+							};
+						};
 					};
 					CC9FD13E2A43017E0021C034 = {
 						CreatedOnToolsVersion = 14.3.1;
@@ -220,6 +372,25 @@
 					CC9FD1482A43017E0021C034 = {
 						CreatedOnToolsVersion = 14.3.1;
 						TestTargetID = CC9FD12D2A43017C0021C034;
+					};
+					D1000000000000000000001D = {
+						CreatedOnToolsVersion = 16.4;
+						SystemCapabilities = {
+							com.apple.Push = {
+								enabled = 1;
+							};
+							com.apple.iCloud = {
+								enabled = 1;
+							};
+						};
+					};
+					D1000000000000000000001E = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = D1000000000000000000001D;
+					};
+					D1000000000000000000001F = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = D1000000000000000000001D;
 					};
 				};
 			};
@@ -239,6 +410,9 @@
 				CC9FD12D2A43017C0021C034 /* MinimalTodo */,
 				CC9FD13E2A43017E0021C034 /* MinimalTodoTests */,
 				CC9FD1482A43017E0021C034 /* MinimalTodoUITests */,
+				D1000000000000000000001D /* MinimalTodoiOS */,
+				D1000000000000000000001E /* MinimalTodoiOSTests */,
+				D1000000000000000000001F /* MinimalTodoiOSUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -267,6 +441,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D10000000000000000000020 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D10000000000000000000007 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D10000000000000000000021 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D10000000000000000000022 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -278,6 +474,7 @@
 				CC3B142F2A48D0C2002E8BEE /* TodoListModel.xcdatamodeld in Sources */,
 				CC9FD1342A43017C0021C034 /* ContentView.swift in Sources */,
 				CC3B14312A48D1E8002E8BEE /* TodoListPersistenceController.swift in Sources */,
+				D10000000000000000000001 /* TodoFeatureView.swift in Sources */,
 				CCF0AA112B9C100000A1B2C3 /* XBookmarksSyncService.swift in Sources */,
 				CCF0AA132B9C200000A1B2C3 /* UsageRecapService.swift in Sources */,
 				CC9FD1322A43017C0021C034 /* MinimalTodoApp.swift in Sources */,
@@ -301,6 +498,35 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D10000000000000000000023 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D10000000000000000000005 /* PersistentController.swift in Sources */,
+				D10000000000000000000003 /* TodoListModel.xcdatamodeld in Sources */,
+				D10000000000000000000004 /* TodoListPersistenceController.swift in Sources */,
+				D10000000000000000000002 /* TodoFeatureView.swift in Sources */,
+				D10000000000000000000006 /* MinimalTodoiOSApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D10000000000000000000024 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D10000000000000000000008 /* MinimalTodoiOSTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D10000000000000000000025 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D1000000000000000000000A /* MinimalTodoiOSUITestsLaunchTests.swift in Sources */,
+				D10000000000000000000009 /* MinimalTodoiOSUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -313,6 +539,16 @@
 			isa = PBXTargetDependency;
 			target = CC9FD12D2A43017C0021C034 /* MinimalTodo */;
 			targetProxy = CC9FD14A2A43017E0021C034 /* PBXContainerItemProxy */;
+		};
+		D10000000000000000000026 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D1000000000000000000001D /* MinimalTodoiOS */;
+			targetProxy = D1000000000000000000000B /* PBXContainerItemProxy */;
+		};
+		D10000000000000000000027 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D1000000000000000000001D /* MinimalTodoiOS */;
+			targetProxy = D1000000000000000000000C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -441,6 +677,7 @@
 		CC9FD1542A43017E0021C034 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APS_ENVIRONMENT = development;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
@@ -456,6 +693,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -463,14 +701,19 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = JD.MinimalTodo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
 		CC9FD1552A43017E0021C034 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APS_ENVIRONMENT = production;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
@@ -486,6 +729,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -493,8 +737,12 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = JD.MinimalTodo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -566,6 +814,144 @@
 			};
 			name = Release;
 		};
+		D10000000000000000000028 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APS_ENVIRONMENT = development;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MinimalTodoiOS/MinimalTodoiOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 22NNXVVA6R;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MinimalTodoiOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JD.MinimalTodo.iOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		D10000000000000000000029 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APS_ENVIRONMENT = production;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MinimalTodoiOS/MinimalTodoiOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 22NNXVVA6R;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MinimalTodoiOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JD.MinimalTodo.iOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		D1000000000000000000002A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 22NNXVVA6R;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JD.MinimalTodoiOSTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MinimalTodoiOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MinimalTodoiOS";
+			};
+			name = Debug;
+		};
+		D1000000000000000000002B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 22NNXVVA6R;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JD.MinimalTodoiOSTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MinimalTodoiOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MinimalTodoiOS";
+			};
+			name = Release;
+		};
+		D1000000000000000000002C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 22NNXVVA6R;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JD.MinimalTodoiOSUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = MinimalTodoiOS;
+			};
+			name = Debug;
+		};
+		D1000000000000000000002D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 22NNXVVA6R;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JD.MinimalTodoiOSUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = MinimalTodoiOS;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -601,6 +987,33 @@
 			buildConfigurations = (
 				CC9FD15A2A43017E0021C034 /* Debug */,
 				CC9FD15B2A43017E0021C034 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D1000000000000000000002E /* Build configuration list for PBXNativeTarget "MinimalTodoiOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D10000000000000000000028 /* Debug */,
+				D10000000000000000000029 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D1000000000000000000002F /* Build configuration list for PBXNativeTarget "MinimalTodoiOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D1000000000000000000002A /* Debug */,
+				D1000000000000000000002B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D10000000000000000000030 /* Build configuration list for PBXNativeTarget "MinimalTodoiOSUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D1000000000000000000002C /* Debug */,
+				D1000000000000000000002D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
