@@ -77,6 +77,8 @@ Build the macOS app:
 ```bash
 xcodebuild build -project MinimalTodo.xcodeproj -scheme MinimalTodo -destination 'platform=macOS'
 ```
+When launched, the app places a todo icon in the menu bar. Click it to open the todo popover.
+If that icon gets cmd-dragged out of the menu bar, MinimalTodo opens a small help window that tells you to restore it from System Settings -> Menu Bar -> "Allow in the Menu Bar".
 
 Build the iOS app:
 

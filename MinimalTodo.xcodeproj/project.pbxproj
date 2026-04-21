@@ -28,6 +28,7 @@
 		D10000000000000000000008 /* MinimalTodoiOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000013 /* MinimalTodoiOSTests.swift */; };
 		D10000000000000000000009 /* MinimalTodoiOSUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000015 /* MinimalTodoiOSUITests.swift */; };
 		D1000000000000000000000A /* MinimalTodoiOSUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10000000000000000000016 /* MinimalTodoiOSUITestsLaunchTests.swift */; };
+		CCF0AA132B9C200000A1B2C3 /* UsageRecapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF0AA122B9C200000A1B2C3 /* UsageRecapService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -88,6 +89,7 @@
 		D10000000000000000000015 /* MinimalTodoiOSUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoiOSUITests.swift; sourceTree = "<group>"; };
 		D10000000000000000000016 /* MinimalTodoiOSUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalTodoiOSUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		D10000000000000000000031 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CCF0AA122B9C200000A1B2C3 /* UsageRecapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRecapService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -172,6 +174,7 @@
 				CCBC107D2A48E1510013EA75 /* PersistentController.swift */,
 				D1000000000000000000000D /* TodoFeatureView.swift */,
 				CCF0AA102B9C100000A1B2C3 /* XBookmarksSyncService.swift */,
+				CCF0AA122B9C200000A1B2C3 /* UsageRecapService.swift */,
 				CC9FD1352A43017E0021C034 /* Assets.xcassets */,
 				CC9FD13A2A43017E0021C034 /* MinimalTodo.entitlements */,
 				CC9FD1372A43017E0021C034 /* Preview Content */,
@@ -473,6 +476,7 @@
 				CC3B14312A48D1E8002E8BEE /* TodoListPersistenceController.swift in Sources */,
 				D10000000000000000000001 /* TodoFeatureView.swift in Sources */,
 				CCF0AA112B9C100000A1B2C3 /* XBookmarksSyncService.swift in Sources */,
+				CCF0AA132B9C200000A1B2C3 /* UsageRecapService.swift in Sources */,
 				CC9FD1322A43017C0021C034 /* MinimalTodoApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -683,10 +687,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"MinimalTodo/Preview Content\"";
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -720,10 +723,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"MinimalTodo/Preview Content\"";
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";

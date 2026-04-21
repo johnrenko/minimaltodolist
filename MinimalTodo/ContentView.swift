@@ -8,6 +8,7 @@ struct ContentView: View {
         case todo
         case pomodoro
         case xBookmarks
+        case usage
     }
 
     private enum PopoverHeight {
@@ -15,6 +16,7 @@ struct ContentView: View {
         static let pomodoro: CGFloat = 280
         static let xBookmarksCollapsed: CGFloat = 560
         static let xBookmarksExpanded: CGFloat = 700
+        static let usage: CGFloat = 540
     }
 
     private enum ThemePreference: String, CaseIterable {
@@ -57,9 +59,11 @@ struct ContentView: View {
     @State private var isPomodoroRunning = false
     @State private var xBookmarksWindow: NSWindow?
     @State private var showsPaidXAPISetup = false
+    @State private var showsFreeChromeSyncSetup = false
     @State private var showsFreeSyncTechnicalDetails = false
     @AppStorage("themePreference") private var themePreferenceRawValue = ThemePreference.system.rawValue
     @ObservedObject private var xBookmarksSyncService: XBookmarksSyncService
+    @StateObject private var usageRecapService = UsageRecapService()
 
     private let capturesAuthenticationAnchor: Bool
     private let preferredPopoverHeightChanged: ((CGFloat) -> Void)?
@@ -147,9 +151,11 @@ struct ContentView: View {
         case .pomodoro:
             return PopoverHeight.pomodoro
         case .xBookmarks:
-            return showsPaidXAPISetup
+            return (showsFreeChromeSyncSetup || showsPaidXAPISetup)
                 ? PopoverHeight.xBookmarksExpanded
                 : PopoverHeight.xBookmarksCollapsed
+        case .usage:
+            return PopoverHeight.usage
         }
     }
 
@@ -168,6 +174,12 @@ struct ContentView: View {
                             Label(option.label, systemImage: option.iconName)
                         }
                     }
+
+                    Divider()
+
+                    Button("Restore Menu Bar Icon...") {
+                        (NSApp.delegate as? AppDelegate)?.showStatusItemRestoreInstructions()
+                    }
                 } label: {
                     Image(systemName: themePreference.iconName)
                         .font(.system(size: 13))
@@ -184,6 +196,7 @@ struct ContentView: View {
             Picker("", selection: $selectedTab) {
                 Text("Pomodoro").tag(AppTab.pomodoro)
                 Text("X Bookmarks").tag(AppTab.xBookmarks)
+                Text("Usage").tag(AppTab.usage)
                 Text("Todo (\(openTodoCount))").tag(AppTab.todo)
             }
             .pickerStyle(.segmented)
@@ -195,6 +208,8 @@ struct ContentView: View {
                     pomodoroSection
                 case .xBookmarks:
                     xBookmarksSection
+                case .usage:
+                    usageSection
                 case .todo:
                     TodoFeatureView(viewModel: viewModel)
                         .padding(.horizontal, 10)
@@ -217,7 +232,10 @@ struct ContentView: View {
         )
         .cornerRadius(8)
         .preferredColorScheme(themePreference.colorScheme)
-        .onAppear(perform: updatePreferredPopoverHeight)
+        .onAppear {
+            updatePreferredPopoverHeight()
+            usageRecapService.refreshCodexUsage()
+        }
         .onReceive(pomodoroTicker) { _ in
             guard isPomodoroRunning else { return }
 
@@ -233,8 +251,23 @@ struct ContentView: View {
         }
         .onChange(of: selectedTab) { _ in
             updatePreferredPopoverHeight()
+
+            if selectedTab == .usage {
+                usageRecapService.refreshCodexUsage()
+            }
         }
         .onChange(of: showsPaidXAPISetup) { _ in
+            guard selectedTab == .xBookmarks else {
+                return
+            }
+
+            updatePreferredPopoverHeight()
+        }
+        .onChange(of: showsFreeChromeSyncSetup) { isExpanded in
+            if !isExpanded {
+                showsFreeSyncTechnicalDetails = false
+            }
+
             guard selectedTab == .xBookmarks else {
                 return
             }
@@ -287,6 +320,162 @@ struct ContentView: View {
         .padding(.vertical, 12)
     }
 
+    private var todoSection: some View {
+        VStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    TextField("New task", text: $newTask)
+                        .textFieldStyle(.plain)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(glassCardBorderColor, lineWidth: 0.8)
+                        )
+                        .onSubmit(addTask)
+
+                    Button("Add", action: addTask)
+                        .buttonStyle(.borderedProminent)
+                        .disabled(newTask.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+
+                HStack(spacing: 12) {
+                    Toggle("Add deadline", isOn: $includesDeadline)
+                        .toggleStyle(.checkbox)
+
+                    if includesDeadline {
+                        DatePicker(
+                            "Deadline",
+                            selection: $selectedDeadline,
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
+                        .datePickerStyle(.compact)
+                        .labelsHidden()
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(glassCardBorderColor, lineWidth: 0.8)
+            )
+            .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
+            .padding(.horizontal, 10)
+
+            Picker("", selection: $viewModel.selectedFilter) {
+                Text("All").tag(TodoListPersistenceController.TodoFilter.all)
+                Text("Todo").tag(TodoListPersistenceController.TodoFilter.todo)
+                Text("Done").tag(TodoListPersistenceController.TodoFilter.done)
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .padding(.vertical, 8)
+            .padding(.trailing, 16)
+            .padding(.leading, 8)
+            .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(glassCardBorderColor, lineWidth: 0.8)
+            )
+            .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
+            .padding(.horizontal, 10)
+
+            if viewModel.items.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "checklist")
+                        .font(.system(size: 24))
+                    Text("No tasks")
+                        .font(.headline)
+                    Text("Add a task to get started.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(glassCardBorderColor, lineWidth: 0.8)
+                )
+                .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
+                .padding(.horizontal, 10)
+            } else {
+                List {
+                    ForEach(viewModel.items) { item in
+                        HStack(alignment: .center, spacing: 12) {
+                            if item.isCompleted {
+                                ZStack {
+                                    Circle()
+                                        .frame(width: 16, height: 16)
+                                        .foregroundColor(Color(hue: 0.528, saturation: 0.86, brightness: 0.64))
+
+                                    Image("check")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 8, height: 8)
+                                }
+                            } else {
+                                Circle()
+                                    .frame(width: 16, height: 16)
+                                    .foregroundColor(pendingCircleFillColor)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color(hue: 0.528, saturation: 0.86, brightness: 0.64), lineWidth: 2)
+                                    )
+                            }
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.task ?? "")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.primary)
+                                    .strikethrough(item.isCompleted, color: .primary)
+                                    .help(item.task ?? "")
+
+                                if let deadline = item.deadline {
+                                    Text(deadline, format: .dateTime.month(.abbreviated).day().year().hour().minute())
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .topLeading)
+
+                            Spacer()
+
+                            Button(action: {
+                                viewModel.removeTask(id: item.id)
+                            }) {
+                                Image("trash")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 12, height: 12)
+                            }
+                            .accessibilityLabel("Delete task")
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            viewModel.toggleIsCompleted(id: item.id)
+                        }
+                        .listRowBackground(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(glassCardBaseColor)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .stroke(glassCardBorderColor, lineWidth: 0.8)
+                                )
+                                .padding(.vertical, 3)
+                        )
+                        .padding(.leading, 2)
+                    }
+                }
+                .scrollContentBackground(.hidden)
+                .background(.clear)
+                .padding(.horizontal, 10)
+            }
+        }
+    }
+
     private var xBookmarksSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -308,7 +497,53 @@ struct ContentView: View {
                 .foregroundColor(.secondary)
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            DisclosureGroup(isExpanded: $showsFreeChromeSyncSetup) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Keep MinimalTodo open, load the included Chrome extension, then sync from your X bookmarks page. By default, only new bookmarks are imported.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 8) {
+                        Button("Open X Bookmarks") {
+                            openURL("https://x.com/i/bookmarks")
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+
+                    DisclosureGroup(isExpanded: $showsFreeSyncTechnicalDetails) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Import endpoint")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(.secondary)
+
+                                Spacer()
+
+                                Button("Copy") {
+                                    copyToPasteboard(xBookmarksSyncService.extensionImportEndpoint)
+                                }
+                                .buttonStyle(.link)
+                            }
+
+                            Text(xBookmarksSyncService.extensionImportEndpoint)
+                                .font(.system(size: 11, design: .monospaced))
+                                .textSelection(.enabled)
+
+                            if !xBookmarksSyncService.isExtensionImportServerRunning {
+                                Button("Retry Listener") {
+                                    xBookmarksSyncService.startExtensionImportListenerIfNeeded()
+                                }
+                                .buttonStyle(.bordered)
+                            }
+                        }
+                        .padding(.top, 4)
+                    } label: {
+                        Text("Technical details")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                }
+                .padding(.top, 6)
+            } label: {
                 HStack {
                     Text("Free Chrome Sync")
                         .font(.system(size: 12, weight: .semibold))
@@ -325,49 +560,6 @@ struct ContentView: View {
                             in: Capsule()
                         )
                         .foregroundColor(xBookmarksSyncService.isExtensionImportServerRunning ? .green : .orange)
-                }
-
-                Text("Keep MinimalTodo open, load the included Chrome extension, then sync from your X bookmarks page. By default, only new bookmarks are imported.")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-
-                HStack(spacing: 8) {
-                    Button("Open X Bookmarks") {
-                        openURL("https://x.com/i/bookmarks")
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-
-                DisclosureGroup(isExpanded: $showsFreeSyncTechnicalDetails) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Import endpoint")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.secondary)
-
-                            Spacer()
-
-                            Button("Copy") {
-                                copyToPasteboard(xBookmarksSyncService.extensionImportEndpoint)
-                            }
-                            .buttonStyle(.link)
-                        }
-
-                        Text(xBookmarksSyncService.extensionImportEndpoint)
-                            .font(.system(size: 11, design: .monospaced))
-                            .textSelection(.enabled)
-
-                        if !xBookmarksSyncService.isExtensionImportServerRunning {
-                            Button("Retry Listener") {
-                                xBookmarksSyncService.startExtensionImportListenerIfNeeded()
-                            }
-                            .buttonStyle(.bordered)
-                        }
-                    }
-                    .padding(.top, 4)
-                } label: {
-                    Text("Technical details")
-                        .font(.system(size: 11, weight: .semibold))
                 }
             }
             .padding(10)
@@ -506,6 +698,128 @@ struct ContentView: View {
         .padding(.horizontal, 10)
     }
 
+    private var usageSection: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                codexUsageCard
+                claudeUsageCard
+            }
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
+        }
+    }
+
+    private var codexUsageCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Codex")
+                    .font(.system(size: 13, weight: .semibold))
+
+                Spacer()
+
+                Button("Refresh") {
+                    usageRecapService.refreshCodexUsage()
+                }
+                .buttonStyle(.bordered)
+                .disabled(usageRecapService.isRefreshing)
+            }
+
+            Text("Pulls real percentages from recent local Codex rate-limit metadata.")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+
+            if let codexSnapshot = usageRecapService.codexSnapshot {
+                usageMetricRow(
+                    title: "5h usage",
+                    value: "\(codexSnapshot.lastFiveHoursPercent)%"
+                )
+
+                ProgressView(value: Double(codexSnapshot.lastFiveHoursPercent), total: 100)
+                    .tint(codexSnapshot.lastFiveHoursPercent >= 80 ? .orange : .accentColor)
+
+                usageMetricRow(
+                    title: "Weekly usage",
+                    value: "\(codexSnapshot.lastWeekPercent)%"
+                )
+
+                ProgressView(value: Double(codexSnapshot.lastWeekPercent), total: 100)
+                    .tint(codexSnapshot.lastWeekPercent >= 80 ? .orange : .accentColor)
+
+                if let lastFiveHoursResetAt = codexSnapshot.lastFiveHoursResetAt {
+                    Text("5h resets \(lastFiveHoursResetAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
+                if let lastWeekResetAt = codexSnapshot.lastWeekResetAt {
+                    Text("Week resets \(lastWeekResetAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
+                Text("Updated \(codexSnapshot.refreshedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            } else if usageRecapService.isRefreshing {
+                ProgressView("Loading Codex usage…")
+                    .font(.system(size: 11))
+            }
+
+            if let codexError = usageRecapService.codexError {
+                Text(codexError)
+                    .font(.system(size: 11))
+                    .foregroundColor(.red)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(glassCardBorderColor, lineWidth: 0.8)
+        )
+        .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
+    }
+
+    private var claudeUsageCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Claude")
+                    .font(.system(size: 13, weight: .semibold))
+
+                Spacer()
+
+                Button("Open Usage Page") {
+                    openURL("https://claude.ai/settings/usage")
+                }
+                .buttonStyle(.bordered)
+            }
+
+            Text("Open Claude's usage page in your browser.")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(glassCardBaseColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(glassCardBorderColor, lineWidth: 0.8)
+        )
+        .shadow(color: glassCardShadowColor, radius: 14, x: 0, y: 8)
+    }
+
+    private func usageMetricRow(title: String, value: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.secondary)
+            Spacer()
+            Text(value)
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
+        }
+    }
+
     private var pomodoroClock: String {
         let minutes = pomodoroSecondsRemaining / 60
         let seconds = pomodoroSecondsRemaining % 60
@@ -563,7 +877,7 @@ struct ContentView: View {
             return "No bookmarks were returned by the X API yet."
         }
 
-        return "Use the free Chrome extension to import bookmarks, or expand the paid X API section if you want direct API sync."
+        return "Expand Free Chrome Sync to import bookmarks, or expand the paid X API section if you want direct API sync."
     }
 
     private func resetPomodoro() {
